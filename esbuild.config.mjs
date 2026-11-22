@@ -26,6 +26,12 @@ function writeStyles() {
 		"\n",
 		fs.readFileSync("packages/augur/styles.css", "utf8"),
 		"\n",
+		fs.readFileSync("packages/lexicon/styles.css", "utf8"),
+		"\n",
+		fs.readFileSync("packages/oracle/styles.css", "utf8"),
+		"\n",
+		fs.readFileSync("packages/beacon/styles.css", "utf8"),
+		"\n",
 		fs.readFileSync("src/styles-host.css", "utf8"),
 	];
 	fs.writeFileSync("styles.css", parts.join("\n"));
@@ -69,6 +75,9 @@ const context = await esbuild.context({
 		"@monolith/visage": path.resolve("packages/visage/src/module.ts"),
 		"@monolith/oculus": path.resolve("packages/oculus/src/module.ts"),
 		"@monolith/augur": path.resolve("packages/augur/src/module.ts"),
+		"@monolith/lexicon": path.resolve("packages/lexicon/src/module.ts"),
+		"@monolith/oracle": path.resolve("packages/oracle/src/module.ts"),
+		"@monolith/beacon": path.resolve("packages/beacon/src/module.ts"),
 	},
 });
 

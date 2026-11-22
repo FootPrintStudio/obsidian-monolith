@@ -2,9 +2,9 @@
 
 FootPrintStudio Obsidian **mega-plugin** — one BRAT artifact with module enable flags (**ship shape A**, npm workspace packaging **C**).
 
-**Loaded (default on):** Grimoire · Epochs · Visage · Oculus · Augur.
+**Spine (default on):** Grimoire · Epochs · Visage · Oculus · Augur · Beacon.
 
-**Later flags:** Beacon · Lexicon Nexus · Oracle. **CollectionXiewer** stays forever external.
+**Optional flags:** Lexicon Nexus · Oracle. **CollectionXiewer** stays forever external.
 
 | | |
 |--|--|

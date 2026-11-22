@@ -1,15 +1,19 @@
 import { Notice, Plugin } from "obsidian";
 import { AugurModule } from "@monolith/augur";
+import { BeaconModule } from "@monolith/beacon";
 import { EpochsModule } from "@monolith/epochs";
 import { GrimoireModule } from "@monolith/grimoire";
+import { LexiconModule } from "@monolith/lexicon";
 import { OculusModule } from "@monolith/oculus";
+import { OracleModule } from "@monolith/oracle";
 import { VisageModule } from "@monolith/visage";
 import { MonolithSettingTab } from "./settings";
 import { DEFAULT_SETTINGS, normalizeSettings, type MonolithSettings } from "./types";
 
 /**
  * Monolith — single BRAT artifact (shape A/C).
- * Order: Epochs → Grimoire (−101) → Visage (0 / v-tabs) → Oculus (oculus fence) → Augur suggest.
+ * Spine default-on: Grimoire, Epochs, Visage, Oculus, Augur, Beacon.
+ * Optional: Lexicon, Oracle.
  */
 export default class MonolithPlugin extends Plugin {
 	settings: MonolithSettings = normalizeSettings(DEFAULT_SETTINGS);
@@ -18,6 +22,9 @@ export default class MonolithPlugin extends Plugin {
 	visage: VisageModule | null = null;
 	oculus: OculusModule | null = null;
 	augur: AugurModule | null = null;
+	beacon: BeaconModule | null = null;
+	lexicon: LexiconModule | null = null;
+	oracle: OracleModule | null = null;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
@@ -29,12 +36,18 @@ export default class MonolithPlugin extends Plugin {
 	onunload(): void {
 		this.augur?.onunload();
 		this.oculus?.onunload();
+		this.lexicon?.onunload();
+		this.oracle?.onunload();
+		this.beacon?.onunload();
 		this.grimoire?.onunload();
 		this.epochs = null;
 		this.grimoire = null;
 		this.visage = null;
 		this.oculus = null;
 		this.augur = null;
+		this.beacon = null;
+		this.lexicon = null;
+		this.oracle = null;
 	}
 
 	async registerCoreProcessors(): Promise<void> {
@@ -60,6 +73,11 @@ export default class MonolithPlugin extends Plugin {
 			await this.oculus.onload();
 		}
 
+		if (modules.lexicon) {
+			this.lexicon = new LexiconModule(this, this.settings.lexicon);
+			await this.lexicon.onload();
+		}
+
 		if (modules.augur) {
 			this.augur = new AugurModule(this, this.settings.augur);
 			await this.augur.onload({
@@ -73,6 +91,7 @@ export default class MonolithPlugin extends Plugin {
 				grimoire: this.settings.grimoire,
 				visage: this.settings.visage,
 				oculus: this.settings.oculus,
+				lexicon: { dictionaryFolder: this.settings.lexicon.dictionaryFolder },
 				listEpochsCalendars: () => {
 					const list = this.epochs?.api.listCalendars() ?? [];
 					return list.map((cal) => ({
@@ -84,6 +103,16 @@ export default class MonolithPlugin extends Plugin {
 				},
 			});
 		}
+
+		if (modules.oracle) {
+			this.oracle = new OracleModule(this, this.settings.oracle);
+			await this.oracle.onload();
+		}
+
+		if (modules.beacon) {
+			this.beacon = new BeaconModule(this, this.settings.beacon);
+			await this.beacon.onload();
+		}
 	}
 
 	private warnIfLegacyEnabled(): void {
@@ -94,12 +123,19 @@ export default class MonolithPlugin extends Plugin {
 		).plugins;
 		const enabled = plugins?.enabledPlugins;
 		if (!enabled) return;
-		const legacy = ["grimoire", "epochs", "visage", "oculus", "augur"].filter((id) =>
-			enabled.has(id),
-		);
+		const legacy = [
+			"grimoire",
+			"epochs",
+			"visage",
+			"oculus",
+			"augur",
+			"lexicon-nexus",
+			"navinote",
+			"system-app-launcher",
+		].filter((id) => enabled.has(id));
 		if (legacy.length === 0) return;
 		new Notice(
-			`Monolith: disable legacy plugin(s) while testing: ${legacy.join(", ")} (double processors unsupported).`,
+			`Monolith: disable legacy plugin(s) while testing: ${legacy.join(", ")}`,
 			8000,
 		);
 	}

@@ -2483,6 +2483,578 @@ body {
 
 
 
+.lxn-term {
+	text-decoration: underline;
+	text-decoration-style: dotted;
+	text-underline-offset: 2px;
+	cursor: help;
+	color: var(--text-accent);
+}
+
+.lxn-popover {
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	padding: 0.65rem 0.85rem;
+	box-shadow: var(--shadow-s);
+	font-size: var(--font-ui-small);
+}
+
+.lxn-popover-title {
+	font-weight: 600;
+	margin-bottom: 0.25rem;
+}
+
+.lxn-popover-aliases {
+	color: var(--text-muted);
+	font-size: 0.85em;
+	margin-bottom: 0.35rem;
+}
+
+.lxn-popover-source {
+	color: var(--text-faint);
+	font-size: 0.75em;
+	margin-bottom: 0.35rem;
+	font-family: var(--font-monospace);
+}
+
+.lxn-popover-goto {
+	color: var(--text-accent);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.lxn-popover-goto:hover {
+	text-decoration: underline;
+}
+
+.lxn-popover-body :is(p, ul, ol) {
+	margin: 0.35em 0;
+}
+
+.lxn-popover.is-pinned {
+	border-color: var(--interactive-accent);
+}
+
+/* Definition browser modal */
+.modal.lxn-browser-modal-shell {
+	width: min(920px, 92vw);
+}
+
+.lxn-browser-modal {
+	display: flex;
+	flex-direction: column;
+	gap: 0.65rem;
+	min-height: 480px;
+}
+
+.lxn-browser-toolbar {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.lxn-browser-search {
+	width: 100%;
+	padding: 0.45rem 0.55rem;
+	font-size: var(--font-ui-medium);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--input-radius);
+	background: var(--background-primary);
+	color: var(--text-normal);
+}
+
+.lxn-browser-filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.35rem 0.5rem;
+}
+
+.lxn-browser-filters-label {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	flex-shrink: 0;
+}
+
+.lxn-browser-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+
+.lxn-browser-chip {
+	font-size: var(--font-ui-small);
+	padding: 0.15rem 0.5rem;
+	border-radius: 999px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.lxn-browser-chip.is-enabled {
+	border-color: var(--interactive-accent);
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.lxn-browser-body {
+	display: flex;
+	flex: 1;
+	gap: 0.65rem;
+	min-height: 360px;
+}
+
+.lxn-browser-list-pane {
+	flex: 0 0 34%;
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	background: var(--background-secondary);
+}
+
+.lxn-browser-list {
+	flex: 1;
+	overflow-y: auto;
+	padding: 0.25rem;
+}
+
+.lxn-browser-list-item {
+	padding: 0.4rem 0.5rem;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.lxn-browser-list-item:hover {
+	background: var(--background-modifier-hover);
+}
+
+.lxn-browser-list-item.is-selected {
+	background: var(--background-modifier-active-hover);
+}
+
+.lxn-browser-list-term {
+	font-weight: 500;
+}
+
+.lxn-browser-list-file {
+	color: var(--text-faint);
+	font-size: 0.75em;
+	font-family: var(--font-monospace);
+	margin-top: 0.1rem;
+}
+
+.lxn-browser-empty {
+	padding: 0.65rem 0.75rem;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.lxn-browser-preview-pane {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	background: var(--background-primary);
+}
+
+.lxn-browser-preview-actions {
+	display: flex;
+	justify-content: flex-end;
+	padding: 0.45rem 0.65rem 0;
+}
+
+.lxn-browser-open-btn {
+	font-size: var(--font-ui-small);
+	padding: 0.25rem 0.55rem;
+	cursor: pointer;
+}
+
+.lxn-browser-preview {
+	flex: 1;
+	overflow-y: auto;
+	padding: 0.65rem 0.85rem;
+}
+
+.lxn-browser-preview-placeholder {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.lxn-browser-requirements {
+	margin-top: 0.75rem;
+	padding-top: 0.55rem;
+	border-top: 1px solid var(--background-modifier-border);
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	font-family: var(--font-monospace);
+}
+
+.lxn-browser-requirements-label {
+	color: var(--text-faint);
+}
+
+/* Settings tabs */
+.lxn-settings-tabs {
+	display: flex;
+	gap: 0;
+	margin: 0.75rem 0 1rem;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.lxn-settings-tab {
+	padding: 0.45rem 0.9rem;
+	cursor: pointer;
+	color: var(--text-muted);
+	border-bottom: 2px solid transparent;
+	margin-bottom: -1px;
+	user-select: none;
+}
+
+.lxn-settings-tab:hover {
+	color: var(--text-normal);
+}
+
+.lxn-settings-tab.is-active {
+	color: var(--text-accent);
+	border-bottom-color: var(--interactive-accent);
+	font-weight: 600;
+}
+
+.lxn-readme-panel,
+.lxn-guide-panel {
+	max-height: 70vh;
+	overflow-y: auto;
+	padding-right: 0.5rem;
+}
+
+.lxn-index-info {
+	margin: 0.5rem 0 0.75rem;
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+}
+
+.lxn-warnings-box {
+	margin: 0.5rem 0 1rem;
+	padding: 0.55rem 0.75rem;
+	border: 1px solid var(--color-orange);
+	border-radius: 6px;
+	background: var(--background-secondary);
+	font-size: var(--font-ui-small);
+}
+
+.lxn-warnings-list {
+	margin: 0.35rem 0 0;
+	padding-left: 1.2rem;
+}
+
+
+
+.navinote-panel {
+	padding: 10px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.navinote-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.navinote-left,
+.navinote-right {
+	flex: 1;
+}
+
+.navinote-center {
+	flex: 2;
+	display: flex;
+	justify-content: center;
+	gap: 10px;
+}
+
+.navinote-right {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+}
+
+.navinote-left {
+	display: flex;
+	gap: 10px;
+}
+
+.navinote-panel button {
+	padding: 5px 10px;
+	background-color: var(--interactive-normal);
+	color: var(--text-normal);
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.navinote-panel button:hover {
+	background-color: var(--interactive-hover);
+}
+
+.navinote-settings-tabs {
+	display: flex;
+	gap: 0;
+	margin: 0.75rem 0 1rem;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.navinote-settings-tab {
+	padding: 0.45rem 0.9rem;
+	cursor: pointer;
+	color: var(--text-muted);
+	border-bottom: 2px solid transparent;
+	margin-bottom: -1px;
+	user-select: none;
+}
+
+.navinote-settings-tab:hover {
+	color: var(--text-normal);
+}
+
+.navinote-settings-tab.is-active {
+	color: var(--text-accent);
+	border-bottom-color: var(--interactive-accent);
+	font-weight: 600;
+}
+
+.navinote-readme-panel {
+	max-height: 70vh;
+	overflow-y: auto;
+	padding-right: 0.5rem;
+}
+
+.navinote-readme-panel h1,
+.navinote-readme-panel h2,
+.navinote-readme-panel h3 {
+	margin-top: 1.2em;
+}
+
+.navinote-readme-panel pre {
+	overflow-x: auto;
+}
+
+.navinote-modal-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	margin-top: 1rem;
+}
+
+
+
+.sal-entry {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+	padding: 0.6rem 0;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.sal-entry-main {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.sal-entry-header {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.sal-kind-badge {
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	padding: 0.1rem 0.4rem;
+	border-radius: 4px;
+	background: var(--background-modifier-hover);
+	color: var(--text-muted);
+}
+
+.sal-kind-badge.desktop {
+	color: var(--text-accent);
+}
+
+.sal-kind-badge.shell {
+	color: var(--text-warning);
+}
+
+.sal-kind-badge.seed {
+	color: var(--text-muted);
+	border: 1px dashed var(--background-modifier-border);
+	background: transparent;
+}
+
+.sal-entry-seed {
+	background: var(--background-secondary);
+	border-radius: 6px;
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
+	margin: 0.25rem 0;
+}
+
+.sal-seed-hint {
+	font-size: 0.8rem;
+	color: var(--text-muted);
+}
+
+.sal-seed-callout {
+	margin: 0.75rem 0 1.25rem;
+	padding: 0.75rem 0.9rem;
+	border: 1px solid var(--background-modifier-border);
+	border-left: 3px solid var(--interactive-accent);
+	border-radius: 6px;
+	background: var(--background-secondary);
+}
+
+.sal-seed-callout-title {
+	font-weight: 600;
+	margin-bottom: 0.35rem;
+}
+
+.sal-seed-callout-body,
+.sal-seed-callout-hint {
+	font-size: 0.85rem;
+	color: var(--text-muted);
+	margin: 0.35rem 0;
+}
+
+.sal-entry-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	flex-shrink: 0;
+}
+
+.sal-command-preview {
+	font-family: var(--font-monospace);
+	font-size: 0.8rem;
+	color: var(--text-muted);
+	word-break: break-all;
+}
+
+.sal-empty {
+	color: var(--text-muted);
+	font-style: italic;
+	padding: 0.5rem 0 1rem;
+}
+
+.sal-modal-search {
+	margin-bottom: 0.75rem;
+}
+
+.sal-modal-list {
+	max-height: 50vh;
+	overflow-y: auto;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+}
+
+.sal-modal-row {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.45rem 0.65rem;
+	border-bottom: 1px solid var(--background-modifier-border);
+	cursor: pointer;
+}
+
+.sal-modal-row:last-child {
+	border-bottom: none;
+}
+
+.sal-modal-row:hover {
+	background: var(--background-modifier-hover);
+}
+
+.sal-modal-row.selected {
+	background: var(--background-modifier-active-hover);
+}
+
+.sal-modal-row-info {
+	flex: 1;
+	min-width: 0;
+}
+
+.sal-modal-row-name {
+	font-weight: 500;
+}
+
+.sal-modal-row-id {
+	font-family: var(--font-monospace);
+	font-size: 0.75rem;
+	color: var(--text-muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.sal-modal-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	margin-top: 0.75rem;
+}
+
+.sal-settings-tabs {
+	display: flex;
+	gap: 0;
+	margin: 0.75rem 0 1rem;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.sal-settings-tab {
+	padding: 0.45rem 0.9rem;
+	cursor: pointer;
+	color: var(--text-muted);
+	border-bottom: 2px solid transparent;
+	margin-bottom: -1px;
+	user-select: none;
+}
+
+.sal-settings-tab:hover {
+	color: var(--text-normal);
+}
+
+.sal-settings-tab.is-active {
+	color: var(--text-accent);
+	border-bottom-color: var(--interactive-accent);
+	font-weight: 600;
+}
+
+.sal-readme-panel {
+	max-height: 70vh;
+	overflow-y: auto;
+	padding-right: 0.5rem;
+}
+
+.sal-readme-panel h1,
+.sal-readme-panel h2,
+.sal-readme-panel h3 {
+	margin-top: 1.2em;
+}
+
+.sal-readme-panel pre {
+	overflow-x: auto;
+}
+
+
+
 /* Monolith host settings chrome */
 
 .monolith-settings-section {

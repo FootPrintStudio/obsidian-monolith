@@ -9,6 +9,8 @@ describe("normalizeSettings", () => {
 		expect(s.modules.visage).toBe(true);
 		expect(s.modules.oculus).toBe(true);
 		expect(s.modules.augur).toBe(true);
+		expect(s.modules.beacon).toBe(true);
+		expect(s.modules.lexicon).toBe(false);
 		expect(s.modules.oracle).toBe(false);
 		expect(s.oculus.collectionXiewerBaseUrl).toContain("127.0.0.1");
 		expect(s.grimoire.inlinePrefix).toBe(DEFAULT_SETTINGS.grimoire.inlinePrefix);

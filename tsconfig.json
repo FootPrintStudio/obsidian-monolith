@@ -11,7 +11,13 @@
 			"@monolith/oculus": ["packages/oculus/src/module.ts"],
 			"@monolith/oculus/*": ["packages/oculus/src/*"],
 			"@monolith/augur": ["packages/augur/src/module.ts"],
-			"@monolith/augur/*": ["packages/augur/src/*"]
+			"@monolith/augur/*": ["packages/augur/src/*"],
+			"@monolith/lexicon": ["packages/lexicon/src/module.ts"],
+			"@monolith/lexicon/*": ["packages/lexicon/src/*"],
+			"@monolith/oracle": ["packages/oracle/src/module.ts"],
+			"@monolith/oracle/*": ["packages/oracle/src/*"],
+			"@monolith/beacon": ["packages/beacon/src/module.ts"],
+			"@monolith/beacon/*": ["packages/beacon/src/*"]
 		},
 		"inlineSourceMap": true,
 		"inlineSources": true,

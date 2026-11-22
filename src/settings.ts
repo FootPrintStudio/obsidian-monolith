@@ -3,17 +3,17 @@ import type MonolithPlugin from "./main";
 import type { ModuleFlags } from "./types";
 
 const SPINE_FLAGS: { key: keyof ModuleFlags; name: string; note: string }[] = [
-	{ key: "grimoire", name: "Grimoire", note: "Inline `q=` expressions (priority −101)" },
+	{ key: "grimoire", name: "Grimoire", note: "Inline `q=` (priority −101)" },
 	{ key: "epochs", name: "Epochs", note: "Fantasy calendars + in-process API" },
-	{ key: "visage", name: "Visage", note: "Reading `v-card` / `v-tabs`" },
-	{ key: "oculus", name: "Oculus", note: "`oculus` galleries + XIEWER client" },
+	{ key: "visage", name: "Visage", note: "`v-card` / `v-tabs`" },
+	{ key: "oculus", name: "Oculus", note: "`oculus` galleries + XIEWER" },
 	{ key: "augur", name: "Augur", note: "Authoring suggest + insert commands" },
+	{ key: "beacon", name: "Beacon", note: "Desktop launch commands (no Buttons; use Command Palette / AS button)" },
 ];
 
 const OPTIONAL_FLAGS: { key: keyof ModuleFlags; name: string; note: string }[] = [
-	{ key: "beacon", name: "Beacon (P8.4)", note: "Desktop launch via Grimoire AS button — not loaded yet" },
-	{ key: "lexicon", name: "Lexicon Nexus (P8.5)", note: "Optional dictionary — not loaded yet" },
-	{ key: "oracle", name: "Oracle (P8.5)", note: "ex-NaviNote — not loaded yet" },
+	{ key: "lexicon", name: "Lexicon Nexus", note: "Optional glossary highlights" },
+	{ key: "oracle", name: "Oracle", note: "ex-NaviNote navigation panel" },
 ];
 
 export class MonolithSettingTab extends PluginSettingTab {
@@ -31,13 +31,12 @@ export class MonolithSettingTab extends PluginSettingTab {
 		containerEl.createEl("h2", { text: "Monolith" });
 		containerEl.createEl("p", {
 			cls: "monolith-notice",
-			text: "Shape A — single BRAT artifact with module flags. Disable legacy FPS plugins while testing. CollectionXiewer stays external.",
+			text: "Shape A — one BRAT artifact, module enable flags. Disable legacy FPS plugins while testing. CollectionXiewer stays external.",
 		});
 
-		containerEl.createEl("h3", { text: "Spine modules" });
-		const flagBox = containerEl.createDiv({ cls: "monolith-module-flags" });
+		containerEl.createEl("h3", { text: "Spine (default on)" });
 		for (const row of SPINE_FLAGS) {
-			new Setting(flagBox)
+			new Setting(containerEl)
 				.setName(row.name)
 				.setDesc(`${row.note}. Toggle requires reload.`)
 				.addToggle((toggle) => {
@@ -48,13 +47,16 @@ export class MonolithSettingTab extends PluginSettingTab {
 				});
 		}
 
-		containerEl.createEl("h3", { text: "Optional / later" });
+		containerEl.createEl("h3", { text: "Optional modules" });
 		for (const row of OPTIONAL_FLAGS) {
 			new Setting(containerEl)
 				.setName(row.name)
-				.setDesc(row.note)
+				.setDesc(`${row.note}. Toggle requires reload.`)
 				.addToggle((toggle) => {
-					toggle.setValue(this.plugin.settings.modules[row.key]).setDisabled(true);
+					toggle.setValue(this.plugin.settings.modules[row.key]).onChange(async (value) => {
+						this.plugin.settings.modules[row.key] = value;
+						await this.plugin.saveSettings();
+					});
 				});
 		}
 
@@ -86,26 +88,11 @@ export class MonolithSettingTab extends PluginSettingTab {
 				});
 		}
 
-		if (this.plugin.settings.modules.visage) {
-			const section = containerEl.createDiv({ cls: "monolith-settings-section" });
-			section.createEl("h3", { text: "Visage" });
-			new Setting(section)
-				.setName("Deck gap")
-				.addText((text) => {
-					text.setValue(this.plugin.settings.visage.deckGap).onChange(async (value) => {
-						this.plugin.settings.visage.deckGap = value || "0.35rem";
-						await this.plugin.saveSettings();
-						this.plugin.visage?.applySettings(this.plugin.settings.visage);
-					});
-				});
-		}
-
 		if (this.plugin.settings.modules.oculus) {
 			const section = containerEl.createDiv({ cls: "monolith-settings-section" });
 			section.createEl("h3", { text: "Oculus" });
 			new Setting(section)
 				.setName("CollectionXiewer base URL")
-				.setDesc("Loopback API (no trailing slash). Xiewer stays external.")
 				.addText((text) => {
 					text
 						.setValue(this.plugin.settings.oculus.collectionXiewerBaseUrl)
@@ -116,32 +103,39 @@ export class MonolithSettingTab extends PluginSettingTab {
 							this.plugin.oculus?.applySettings(this.plugin.settings.oculus);
 						});
 				});
+		}
+
+		if (this.plugin.settings.modules.lexicon) {
+			const section = containerEl.createDiv({ cls: "monolith-settings-section" });
+			section.createEl("h3", { text: "Lexicon Nexus" });
 			new Setting(section)
-				.setName("Lightbox markdown images")
-				.addToggle((toggle) => {
-					toggle
-						.setValue(this.plugin.settings.oculus.lightboxMarkdownImages)
-						.onChange(async (value) => {
-							this.plugin.settings.oculus.lightboxMarkdownImages = value;
-							await this.plugin.saveSettings();
-							this.plugin.oculus?.applySettings(this.plugin.settings.oculus);
-						});
+				.setName("Dictionary folder")
+				.addText((text) => {
+					text.setValue(this.plugin.settings.lexicon.dictionaryFolder).onChange(async (value) => {
+						this.plugin.settings.lexicon.dictionaryFolder = value.trim() || "Dictionary";
+						await this.plugin.saveSettings();
+						this.plugin.lexicon?.applySettings(this.plugin.settings.lexicon);
+					});
 				});
 		}
 
-		if (this.plugin.settings.modules.augur) {
+		if (this.plugin.settings.modules.beacon) {
 			const section = containerEl.createDiv({ cls: "monolith-settings-section" });
-			section.createEl("h3", { text: "Augur" });
+			section.createEl("h3", { text: "Beacon" });
 			new Setting(section)
-				.setName("Grimoire prefix (fallback)")
-				.setDesc("Used when Grimoire module settings are unavailable")
+				.setName("Command name prefix")
+				.setDesc("Obsidian command names; invoke via Command Palette or Grimoire AS button (no Buttons plugin).")
 				.addText((text) => {
-					text.setValue(this.plugin.settings.augur.grimoirePrefix).onChange(async (value) => {
-						this.plugin.settings.augur.grimoirePrefix = value || "q=";
+					text.setValue(this.plugin.settings.beacon.commandNamePrefix).onChange(async (value) => {
+						this.plugin.settings.beacon.commandNamePrefix = value || "Launch App: ";
 						await this.plugin.saveSettings();
-						this.plugin.augur?.applySettings(this.plugin.settings.augur);
+						this.plugin.beacon?.applySettings(this.plugin.settings.beacon);
 					});
 				});
+			new Setting(section)
+				.setName(`Launcher entries (${this.plugin.settings.beacon.entries.length})`)
+				.setDesc("Edit entries in a future settings slice; Decision C CollectionXiewer seed is opt-in once.")
+				.setDisabled(true);
 		}
 	}
 }

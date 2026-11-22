@@ -1,9 +1,9 @@
 {
 	"id": "monolith",
 	"name": "Monolith",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"minAppVersion": "1.5.0",
-	"description": "FootPrintStudio Obsidian mega-plugin — Grimoire, Epochs, Visage, Oculus, Augur (shape A flags). Trial BRAT id; disable legacy plugins while testing. CollectionXiewer stays external.",
+	"description": "FootPrintStudio Obsidian mega-plugin — full module set behind flags (shape A). CollectionXiewer stays external. Disable legacy FPS plugins while testing.",
 	"author": "FootPrintStudio",
 	"authorUrl": "https://github.com/FootPrintStudio",
 	"isDesktopOnly": false
