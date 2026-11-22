@@ -1,0 +1,32 @@
+{
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@monolith/epochs": ["packages/epochs/src/module.ts"],
+			"@monolith/epochs/*": ["packages/epochs/src/*"],
+			"@monolith/grimoire": ["packages/grimoire/src/module.ts"],
+			"@monolith/grimoire/*": ["packages/grimoire/src/*"],
+			"@monolith/visage": ["packages/visage/src/module.ts"],
+			"@monolith/visage/*": ["packages/visage/src/*"]
+		},
+		"inlineSourceMap": true,
+		"inlineSources": true,
+		"module": "ESNext",
+		"target": "ES2021",
+		"allowJs": true,
+		"noImplicitAny": true,
+		"moduleResolution": "bundler",
+		"importHelpers": true,
+		"lib": ["DOM", "DOM.Iterable", "ES2021"],
+		"strictNullChecks": true,
+		"skipLibCheck": true,
+		"resolveJsonModule": true
+	},
+	"include": ["src/**/*.ts", "packages/*/src/**/*.ts", "packages/*/src/**/*.d.ts"],
+	"exclude": [
+		"packages/*/src/settings.ts",
+		"packages/*/src/readmeTab.ts",
+		"node_modules"
+	]
+}
+

@@ -1,0 +1,139 @@
+import type { LinkOpenBehavior, RenderStyle } from "./renderStyle";
+
+export interface PropertyQuerySettings {
+	inlinePrefix: string;
+	enableInReadingView: boolean;
+	enableSyntaxHighlight: boolean;
+	debugMode: boolean;
+	refreshOnMetadataChange: boolean;
+	linkOpenBehavior: LinkOpenBehavior;
+	/** Comma-separated substrings that map AS badge/pill text to success tone. */
+	badgeSuccessTriggers: string;
+	/** Comma-separated substrings that map AS badge/pill text to warn tone. */
+	badgeWarnTriggers: string;
+	/** Comma-separated substrings that map AS badge/pill text to danger tone. */
+	badgeDangerTriggers: string;
+	/** Glyph for filled AS meter / stars slots. */
+	meterFilledChar: string;
+	/** Glyph for empty AS meter / stars slots. */
+	meterEmptyChar: string;
+}
+
+export const DEFAULT_SETTINGS: PropertyQuerySettings = {
+	inlinePrefix: "q=",
+	enableInReadingView: true,
+	enableSyntaxHighlight: true,
+	debugMode: false,
+	refreshOnMetadataChange: false,
+	linkOpenBehavior: "default",
+	badgeSuccessTriggers: "alive, ok, success, active, complete, done",
+	badgeWarnTriggers: "warn, warning, undead, pending, unknown",
+	badgeDangerTriggers: "dead, error, fail, danger, critical, missing",
+	meterFilledChar: "★",
+	meterEmptyChar: "☆",
+};
+
+/** Branded date value (epoch ms, interpreted via Obsidian moment or Epochs). */
+export interface PqDate {
+	readonly __pqDate: true;
+	readonly ms: number;
+	/** When set, format/arithmetic may use the Epochs calendar with this id. */
+	readonly calendarId?: string;
+}
+
+/** Branded duration value (length in milliseconds). */
+export interface PqDuration {
+	readonly __pqDuration: true;
+	readonly ms: number;
+	/** When present, date +/- uses calendar units (years, months, …) not fixed ms. */
+	readonly calendar?: ReadonlyArray<{ readonly amount: number; readonly unit: string }>;
+	/**
+	 * When set (typically from fantasy `date - date`), human/`durationformat`
+	 * may use Epochs `formatDuration` for that calendar’s year/day lengths.
+	 */
+	readonly calendarId?: string;
+}
+
+/** Value wrapped with an `AS <style>` postfix. */
+export interface PqStyled {
+	readonly __pqStyled: true;
+	readonly value: Value;
+	readonly style: RenderStyle;
+}
+
+/** Mixed plain + styled parts from concatenating styled subexpressions. */
+export interface PqFragments {
+	readonly __pqFragments: true;
+	readonly parts: Value[];
+}
+
+export type OutputKind = "empty" | "markdown" | "html" | "text";
+
+export type Value =
+	| null
+	| boolean
+	| number
+	| string
+	| PqDate
+	| PqDuration
+	| PqStyled
+	| PqFragments
+	| Value[]
+	| { [key: string]: Value };
+
+export interface FileMeta {
+	name: string;
+	path: string;
+	folder: string;
+	mtime: PqDate;
+	ctime: PqDate;
+	size: number;
+	tags: string[];
+}
+
+/** Evaluation context: frontmatter fields + reserved file metadata. */
+export interface QueryContext {
+	fields: Record<string, Value>;
+	file: FileMeta;
+	/** Obsidian app for cross-note resolve (Reading view). */
+	app?: import("obsidian").App;
+	/** Source note path for linkpath resolution. */
+	sourcePath?: string;
+	/** Target paths touched during eval (refresh dependency registry). */
+	deps?: Set<string>;
+	/** Test / alternate vault bridge — returns a context for a linkpath. */
+	resolveNote?: (linkpath: string) => QueryContext | null;
+	/** Test / alternate vault bridge — pages for `@({from(...)})`. */
+	listNotes?: (fromArg: string) => QueryContext[];
+	/**
+	 * Authoring (source) note while evaluating an `@` map/where body.
+	 * When set, bare `this` / `this.file` resolve to this context (Carl lock).
+	 */
+	sourceCtx?: QueryContext;
+}
+
+/** Hard cap for `@({from…})` page lists (Visage safety). Over-cap → empty list. */
+export const AT_QUERY_MAX_PAGES = 250;
+
+export type AstNode =
+	| { kind: "literal"; value: Value }
+	| { kind: "ident"; name: string }
+	/** Bare wiki page handle `[[linkpath]]`. */
+	| { kind: "wiki"; path: string }
+	| { kind: "member"; object: AstNode; property: string }
+	| { kind: "index"; object: AstNode; index: AstNode }
+	/** Brace `{a, b}` — also `{a}` which parses as pair with false arm `""`. */
+	| { kind: "pair"; key: AstNode; value: AstNode }
+	/** Brace group with 3+ comma-separated expressions, e.g. `{v, lo, hi}`. */
+	| { kind: "tuple"; elements: AstNode[] }
+	| { kind: "unary"; op: string; arg: AstNode }
+	| { kind: "binary"; op: string; left: AstNode; right: AstNode }
+	| { kind: "call"; callee: string; args: AstNode[] }
+	| { kind: "styled"; expr: AstNode; style: RenderStyle }
+	/** `@({from("…")}, {where…}?, {map}?)` multi-note query. */
+	| {
+			kind: "atQuery";
+			fromArg: AstNode;
+			where: AstNode[];
+			map: AstNode | null;
+	  };
