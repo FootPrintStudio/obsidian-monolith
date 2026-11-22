@@ -544,7 +544,7 @@ Apply **`AS <style>`** after any subexpression to wrap that value in a Pretty-st
 | `meter` | `stars` | Discrete 1–5 rating; filled/empty glyphs from Settings (default ★ / ☆). |
 | `image` | `img` | Vault path, `![](…)`, or wiki embed rendered like `![[…]]` (full column/cell width). |
 | `wiki` | `wikilink` | Wikilink (or URL) styling without button chrome. |
-| `button` | `buttons` | Link buttons for `[[Note]]`, `[label](url)`, or `https://…` |
+| `button` | `buttons` | Link buttons for `[[Note]]`, `[label](url)`, or `https://…`; **command** buttons via `[label](cmd:plugin:command-id)` (Beacon / Monolith launches, no Buttons plugin) |
 | `cards-code` | `code`, `code-card`, `codecard` | Monospace chips with a leading `.` |
 | `inline` | | Comma-separated text |
 | `list` | | Bulleted `<ul>` |

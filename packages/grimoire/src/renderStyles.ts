@@ -306,6 +306,18 @@ function renderWiki(
 	}
 }
 
+function executeObsidianCommand(app: App, commandId: string): void {
+	const commands = (
+		app as App & {
+			commands?: { executeCommandById?: (id: string) => boolean };
+		}
+	).commands;
+	const ok = commands?.executeCommandById?.(commandId);
+	if (!ok) {
+		console.warn(`[grimoire] AS button: unknown command "${commandId}"`);
+	}
+}
+
 function renderButton(
 	el: HTMLElement,
 	values: string[],
@@ -314,7 +326,22 @@ function renderButton(
 	linkOpenBehavior: LinkOpenBehavior,
 ): void {
 	for (const v of values) {
-		const { cleanedValue, displayText: initialDisplayText, isUrl } = parseLink(v);
+		const { cleanedValue, displayText: initialDisplayText, isUrl, commandId } = parseLink(v);
+
+		if (commandId) {
+			const displayText = initialDisplayText || commandId.split(":").pop() || commandId;
+			const button = el.createEl("button", {
+				cls: "grim-button grim-command-button",
+				text: displayText,
+				attr: { type: "button" },
+			});
+			button.addEventListener("click", (e) => {
+				e.preventDefault();
+				executeObsidianCommand(app, commandId);
+			});
+			continue;
+		}
+
 		let displayText = isUrl
 			? initialDisplayText || getHostname(cleanedValue)
 			: initialDisplayText || cleanedValue;

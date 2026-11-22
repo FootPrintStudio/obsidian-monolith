@@ -53,6 +53,8 @@ export interface MonolithSettings {
 	beacon: BeaconSettings;
 	lexicon: LexiconNexusSettings;
 	oracle: NaviNoteSettings;
+	/** M3: true after first-run copy-forward from legacy plugin data.json files. */
+	migratedFromLegacy: boolean;
 }
 
 export const DEFAULT_MODULE_FLAGS: ModuleFlags = {
@@ -76,6 +78,7 @@ export const DEFAULT_SETTINGS: MonolithSettings = {
 	beacon: { ...DEFAULT_BEACON_SETTINGS },
 	lexicon: { ...DEFAULT_LEXICON_SETTINGS },
 	oracle: { ...DEFAULT_ORACLE_SETTINGS },
+	migratedFromLegacy: false,
 };
 
 export function normalizeSettings(
@@ -92,5 +95,6 @@ export function normalizeSettings(
 		beacon: { ...DEFAULT_BEACON_SETTINGS, ...(raw.beacon ?? {}) },
 		lexicon: { ...DEFAULT_LEXICON_SETTINGS, ...(raw.lexicon ?? {}) },
 		oracle: { ...DEFAULT_ORACLE_SETTINGS, ...(raw.oracle ?? {}) },
+		migratedFromLegacy: Boolean(raw.migratedFromLegacy),
 	};
 }

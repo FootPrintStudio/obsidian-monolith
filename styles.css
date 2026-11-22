@@ -201,6 +201,17 @@
 	border: 1px solid var(--background-modifier-border);
 }
 
+.grim-command-button {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: 1px solid var(--interactive-accent);
+	cursor: pointer;
+}
+
+.grim-command-button:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
 .grim-internal-link:hover {
 	background-color: var(--interactive-accent-hover);
 }

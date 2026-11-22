@@ -150,8 +150,20 @@ export class BeaconModule {
 		});
 	}
 
-	private commandIdFor(entry: LauncherEntry): string {
+	/** Local command id (Obsidian prefixes with plugin id). */
+	commandIdFor(entry: LauncherEntry): string {
 		return `monolith-beacon-launch-${entry.id}`;
+	}
+
+	/** Full command id for `app.commands.executeCommandById` / Grimoire `cmd:`. */
+	getFullCommandId(entry: LauncherEntry): string {
+		return `${this.host.manifest.id}:${this.commandIdFor(entry)}`;
+	}
+
+	/** Note snippet: `` `q= "cmd:…" AS button` `` */
+	getAsButtonSnippet(entry: LauncherEntry): string {
+		const label = entry.name.replace(/"/g, '\\"');
+		return `\`q= "[${label}](cmd:${this.getFullCommandId(entry)})" AS button\``;
 	}
 
 	clearCommands(): void {

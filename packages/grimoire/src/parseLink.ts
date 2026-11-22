@@ -6,10 +6,21 @@ export interface ParsedLink {
 	cleanedValue: string;
 	displayText: string | null;
 	isUrl: boolean;
+	/** Obsidian command id for `cmd:` / `command:` AS button targets. */
+	commandId: string | null;
 }
 
 function isExternalUrl(target: string): boolean {
 	return /^https?:\/\//i.test(target) || target.startsWith("www.");
+}
+
+/** `cmd:plugin:local-id` or `command:plugin:local-id` → command id. */
+export function parseCommandTarget(target: string): string | null {
+	const t = target.trim();
+	const m = /^(?:cmd|command):(.+)$/i.exec(t);
+	if (!m?.[1]) return null;
+	const id = m[1].trim();
+	return id || null;
 }
 
 export function parseLink(link: string): ParsedLink {
@@ -18,28 +29,36 @@ export function parseLink(link: string): ParsedLink {
 	const markdownLink = link.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
 	if (markdownLink) {
 		const target = markdownLink[2]!.trim();
+		const commandId = parseCommandTarget(target);
 		return {
 			cleanedValue: target,
 			displayText: markdownLink[1]!.trim(),
-			isUrl: isExternalUrl(target),
+			isUrl: !commandId && isExternalUrl(target),
+			commandId,
 		};
 	}
 
 	const internalMatch = link.match(/^\[\[([^|]+)\|([^\]]+)\]\]$/);
 	if (internalMatch) {
+		const target = internalMatch[1]!.trim();
+		const commandId = parseCommandTarget(target);
 		return {
-			cleanedValue: internalMatch[1]!.trim(),
+			cleanedValue: target,
 			displayText: internalMatch[2]!.trim(),
 			isUrl: false,
+			commandId,
 		};
 	}
 
 	link = link.replace(/^\[\[(.*)\]\]$/, "$1");
-	const isUrl = isExternalUrl(link.trim());
+	const cleaned = link.trim();
+	const commandId = parseCommandTarget(cleaned);
+	const isUrl = !commandId && isExternalUrl(cleaned);
 	return {
-		cleanedValue: link.trim(),
+		cleanedValue: cleaned,
 		displayText: null,
 		isUrl,
+		commandId,
 	};
 }
 

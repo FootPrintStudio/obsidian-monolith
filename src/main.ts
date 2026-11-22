@@ -7,6 +7,7 @@ import { LexiconModule } from "@monolith/lexicon";
 import { OculusModule } from "@monolith/oculus";
 import { OracleModule } from "@monolith/oracle";
 import { VisageModule } from "@monolith/visage";
+import { migrateLegacySettings } from "./migrate";
 import { MonolithSettingTab } from "./settings";
 import { DEFAULT_SETTINGS, normalizeSettings, type MonolithSettings } from "./types";
 
@@ -28,9 +29,25 @@ export default class MonolithPlugin extends Plugin {
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
+		await this.runLegacyMigrate();
 		this.addSettingTab(new MonolithSettingTab(this.app, this));
 		this.warnIfLegacyEnabled();
 		await this.registerCoreProcessors();
+	}
+
+	/** M3 — copy-forward from legacy data.json once; never deletes old files. */
+	private async runLegacyMigrate(): Promise<void> {
+		const result = await migrateLegacySettings(this.app, this.settings);
+		if (result.imported.length > 0 || !this.settings.migratedFromLegacy) {
+			this.settings = result.settings;
+			await this.saveSettings();
+		}
+		if (result.imported.length > 0) {
+			new Notice(
+				`Monolith: imported settings from ${result.imported.join(", ")} (legacy files kept).`,
+				8000,
+			);
+		}
 	}
 
 	onunload(): void {
@@ -110,8 +127,14 @@ export default class MonolithPlugin extends Plugin {
 		}
 
 		if (modules.beacon) {
+			const beaconBefore = JSON.stringify(this.settings.beacon);
 			this.beacon = new BeaconModule(this, this.settings.beacon);
 			await this.beacon.onload();
+			// Seed mutates module settings in-memory — persist so the flag sticks.
+			this.settings.beacon = this.beacon.settings;
+			if (JSON.stringify(this.settings.beacon) !== beaconBefore) {
+				await this.saveSettings();
+			}
 		}
 	}
 
