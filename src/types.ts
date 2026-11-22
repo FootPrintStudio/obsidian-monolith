@@ -1,4 +1,8 @@
 import {
+	DEFAULT_SETTINGS as DEFAULT_AUGUR_SETTINGS,
+	type AugurSettings,
+} from "../packages/augur/src/types";
+import {
 	DEFAULT_SETTINGS as DEFAULT_EPOCHS_SETTINGS,
 	type EpochsSettings,
 } from "../packages/epochs/src/types";
@@ -6,6 +10,10 @@ import {
 	DEFAULT_SETTINGS as DEFAULT_GRIMOIRE_SETTINGS,
 	type PropertyQuerySettings,
 } from "../packages/grimoire/src/types";
+import {
+	DEFAULT_SETTINGS as DEFAULT_OCULUS_SETTINGS,
+	type MediaGallerySettings,
+} from "../packages/oculus/src/types";
 import {
 	DEFAULT_SETTINGS as DEFAULT_VISAGE_SETTINGS,
 	type VisageSettings,
@@ -16,7 +24,6 @@ export interface ModuleFlags {
 	grimoire: boolean;
 	epochs: boolean;
 	visage: boolean;
-	/** P8.2+ stubs — present in settings, not loaded in P8.1. */
 	oculus: boolean;
 	augur: boolean;
 	beacon: boolean;
@@ -29,14 +36,16 @@ export interface MonolithSettings {
 	grimoire: PropertyQuerySettings;
 	epochs: EpochsSettings;
 	visage: VisageSettings;
+	oculus: MediaGallerySettings;
+	augur: AugurSettings;
 }
 
 export const DEFAULT_MODULE_FLAGS: ModuleFlags = {
 	grimoire: true,
 	epochs: true,
 	visage: true,
-	oculus: false,
-	augur: false,
+	oculus: true,
+	augur: true,
 	beacon: false,
 	lexicon: false,
 	oracle: false,
@@ -47,6 +56,8 @@ export const DEFAULT_SETTINGS: MonolithSettings = {
 	grimoire: { ...DEFAULT_GRIMOIRE_SETTINGS },
 	epochs: { ...DEFAULT_EPOCHS_SETTINGS },
 	visage: { ...DEFAULT_VISAGE_SETTINGS },
+	oculus: { ...DEFAULT_OCULUS_SETTINGS },
+	augur: { ...DEFAULT_AUGUR_SETTINGS },
 };
 
 export function normalizeSettings(
@@ -58,5 +69,7 @@ export function normalizeSettings(
 		grimoire: { ...DEFAULT_GRIMOIRE_SETTINGS, ...(raw.grimoire ?? {}) },
 		epochs: { ...DEFAULT_EPOCHS_SETTINGS, ...(raw.epochs ?? {}) },
 		visage: { ...DEFAULT_VISAGE_SETTINGS, ...(raw.visage ?? {}) },
+		oculus: { ...DEFAULT_OCULUS_SETTINGS, ...(raw.oculus ?? {}) },
+		augur: { ...DEFAULT_AUGUR_SETTINGS, ...(raw.augur ?? {}) },
 	};
 }

@@ -22,6 +22,10 @@ function writeStyles() {
 		"\n",
 		fs.readFileSync("packages/visage/styles.css", "utf8"),
 		"\n",
+		fs.readFileSync("packages/oculus/styles.css", "utf8"),
+		"\n",
+		fs.readFileSync("packages/augur/styles.css", "utf8"),
+		"\n",
 		fs.readFileSync("src/styles-host.css", "utf8"),
 	];
 	fs.writeFileSync("styles.css", parts.join("\n"));
@@ -63,6 +67,8 @@ const context = await esbuild.context({
 		"@monolith/epochs": path.resolve("packages/epochs/src/module.ts"),
 		"@monolith/grimoire": path.resolve("packages/grimoire/src/module.ts"),
 		"@monolith/visage": path.resolve("packages/visage/src/module.ts"),
+		"@monolith/oculus": path.resolve("packages/oculus/src/module.ts"),
+		"@monolith/augur": path.resolve("packages/augur/src/module.ts"),
 	},
 });
 

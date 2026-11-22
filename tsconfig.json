@@ -7,7 +7,11 @@
 			"@monolith/grimoire": ["packages/grimoire/src/module.ts"],
 			"@monolith/grimoire/*": ["packages/grimoire/src/*"],
 			"@monolith/visage": ["packages/visage/src/module.ts"],
-			"@monolith/visage/*": ["packages/visage/src/*"]
+			"@monolith/visage/*": ["packages/visage/src/*"],
+			"@monolith/oculus": ["packages/oculus/src/module.ts"],
+			"@monolith/oculus/*": ["packages/oculus/src/*"],
+			"@monolith/augur": ["packages/augur/src/module.ts"],
+			"@monolith/augur/*": ["packages/augur/src/*"]
 		},
 		"inlineSourceMap": true,
 		"inlineSources": true,

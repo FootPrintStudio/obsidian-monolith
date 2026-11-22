@@ -7,8 +7,10 @@ describe("normalizeSettings", () => {
 		expect(s.modules.grimoire).toBe(true);
 		expect(s.modules.epochs).toBe(true);
 		expect(s.modules.visage).toBe(true);
-		expect(s.modules.oculus).toBe(false);
+		expect(s.modules.oculus).toBe(true);
+		expect(s.modules.augur).toBe(true);
 		expect(s.modules.oracle).toBe(false);
+		expect(s.oculus.collectionXiewerBaseUrl).toContain("127.0.0.1");
 		expect(s.grimoire.inlinePrefix).toBe(DEFAULT_SETTINGS.grimoire.inlinePrefix);
 	});
 
