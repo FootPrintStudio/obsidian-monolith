@@ -3,6 +3,12 @@ import { tryOpenVideoInMediaExtended } from "../mediaExtended";
 import { copyGalleryItemName, galleryItemName } from "../mediaName";
 import type { GalleryItem, MediaGallerySettings } from "../types";
 import { resolveXiewerObjectUrl } from "../xiewerClient";
+import {
+	computeContainSize,
+	layoutSizeForMode,
+	shouldUseFullRes,
+	transformScaleForMode,
+} from "./lightboxZoom";
 
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 5;
@@ -13,7 +19,8 @@ export class LightboxModal extends Modal {
 	private items: GalleryItem[];
 	private index: number;
 	private settings: MediaGallerySettings;
-	private scale = 1;
+	/** User zoom: 1 = contain-fit in the viewport. */
+	private userScale = 1;
 	private translateX = 0;
 	private translateY = 0;
 	private isDragging = false;
@@ -28,6 +35,14 @@ export class LightboxModal extends Modal {
 	private infoEl: HTMLElement | null = null;
 	private disposers: Array<() => void> = [];
 	private renderGeneration = 0;
+	/** Contain-fit scale (fitted / natural). Updated on load and viewport resize. */
+	private fitScale = 1;
+	private fitWidth = 0;
+	private fitHeight = 0;
+	private naturalWidth = 0;
+	private naturalHeight = 0;
+	/** When true, `<img>` is laid out at natural pixels so Chromium redecodes full-res. */
+	private fullRes = false;
 
 	constructor(app: App, items: GalleryItem[], index: number, settings: MediaGallerySettings) {
 		super(app);
@@ -87,6 +102,7 @@ export class LightboxModal extends Modal {
 		);
 
 		this.setupPanZoom();
+		this.setupViewportResize();
 		this.renderItem();
 
 		this.scope.register([], "Escape", () => {
@@ -111,7 +127,7 @@ export class LightboxModal extends Modal {
 			if (!this.panZoomEnabled || !(this.mediaEl instanceof HTMLImageElement)) return;
 			event.preventDefault();
 			const factor = event.deltaY < 0 ? ZOOM_WHEEL_FACTOR : 1 / ZOOM_WHEEL_FACTOR;
-			this.setZoom(this.scale * factor);
+			this.setZoom(this.userScale * factor);
 		};
 		viewport.addEventListener("wheel", onWheel, { passive: false });
 		this.disposers.push(() => viewport.removeEventListener("wheel", onWheel));
@@ -148,6 +164,21 @@ export class LightboxModal extends Modal {
 		this.disposers.push(() => window.removeEventListener("mouseup", onMouseUp));
 	}
 
+	private setupViewportResize(): void {
+		const viewport = this.viewportEl;
+		if (!viewport || typeof ResizeObserver === "undefined") return;
+		const observer = new ResizeObserver(() => {
+			if (!(this.mediaEl instanceof HTMLImageElement) || !this.panZoomEnabled) return;
+			if (this.naturalWidth <= 0 || this.naturalHeight <= 0) return;
+			this.recomputeFitFromNatural();
+			this.syncImageLayout();
+			this.clampTranslate();
+			this.applyTransform();
+		});
+		observer.observe(viewport);
+		this.disposers.push(() => observer.disconnect());
+	}
+
 	private renderItem(): void {
 		void this.renderItemAsync();
 	}
@@ -162,6 +193,12 @@ export class LightboxModal extends Modal {
 		transform.empty();
 		info.empty();
 		this.resetTransform(false);
+		this.fullRes = false;
+		this.fitScale = 1;
+		this.fitWidth = 0;
+		this.fitHeight = 0;
+		this.naturalWidth = 0;
+		this.naturalHeight = 0;
 
 		const item = this.items[this.index];
 		if (!item) return;
@@ -183,25 +220,30 @@ export class LightboxModal extends Modal {
 		if (item.urlVariant === "hosted") {
 			this.panZoomEnabled = false;
 			this.mediaEl = transform.createEl("img", {
+				cls: "mg-lightbox-media mg-lightbox-media-static",
 				attr: { src, alt: item.name, draggable: "false" },
 			});
 		} else if (item.mediaKind === "video") {
 			this.panZoomEnabled = false;
 			this.mediaEl = transform.createEl("video", {
+				cls: "mg-lightbox-media mg-lightbox-media-static",
 				attr: { src, controls: "", autoplay: "", playsinline: "" },
 			});
 		} else {
 			this.panZoomEnabled = true;
 			this.mediaEl = transform.createEl("img", {
+				cls: "mg-lightbox-media mg-lightbox-media-fit",
 				attr: { src, alt: item.name, draggable: "false" },
 			});
 			this.mediaEl.addEventListener("click", (event) => {
 				event.stopPropagation();
 			});
 			this.mediaEl.addEventListener("load", () => {
-				this.clampTranslate();
-				this.applyTransform();
+				this.onImageLoaded();
 			});
+			if (this.mediaEl.complete && this.mediaEl.naturalWidth > 0) {
+				this.onImageLoaded();
+			}
 		}
 
 		if (this.settings.showCaptions && item.caption) {
@@ -223,11 +265,70 @@ export class LightboxModal extends Modal {
 		});
 	}
 
-	private getBaseSize(): { width: number; height: number } | null {
-		if (!(this.mediaEl instanceof HTMLImageElement)) return null;
-		const { offsetWidth, offsetHeight } = this.mediaEl;
-		if (offsetWidth <= 0 || offsetHeight <= 0) return null;
-		return { width: offsetWidth, height: offsetHeight };
+	private onImageLoaded(): void {
+		if (!(this.mediaEl instanceof HTMLImageElement)) return;
+		this.naturalWidth = this.mediaEl.naturalWidth;
+		this.naturalHeight = this.mediaEl.naturalHeight;
+		this.recomputeFitFromNatural();
+		this.syncImageLayout();
+		this.clampTranslate();
+		this.applyTransform();
+	}
+
+	private recomputeFitFromNatural(): void {
+		const viewport = this.getViewportSize();
+		const fitted = computeContainSize(
+			this.naturalWidth,
+			this.naturalHeight,
+			viewport.width,
+			viewport.height,
+		);
+		this.fitWidth = fitted.width;
+		this.fitHeight = fitted.height;
+		this.fitScale = fitted.scale;
+	}
+
+	/**
+	 * Fit mode: layout at contain size so Chromium can keep a smaller decode (memory).
+	 * Full-res mode: layout at natural pixels so zoom past ~1× stays sharp.
+	 */
+	private syncImageLayout(): void {
+		if (!(this.mediaEl instanceof HTMLImageElement) || !this.panZoomEnabled) return;
+		if (this.naturalWidth <= 0 || this.naturalHeight <= 0) return;
+
+		const wantFullRes = shouldUseFullRes(this.userScale);
+		this.fullRes = wantFullRes;
+
+		const size = layoutSizeForMode(
+			this.naturalWidth,
+			this.naturalHeight,
+			this.fitWidth,
+			this.fitHeight,
+			this.fullRes,
+		);
+
+		this.mediaEl.classList.toggle("mg-lightbox-media-fit", !this.fullRes);
+		this.mediaEl.classList.toggle("mg-lightbox-media-fullres", this.fullRes);
+		this.mediaEl.style.width = `${size.width}px`;
+		this.mediaEl.style.height = `${size.height}px`;
+		this.mediaEl.removeAttribute("width");
+		this.mediaEl.removeAttribute("height");
+	}
+
+	private getLayoutSize(): { width: number; height: number } | null {
+		if (!(this.mediaEl instanceof HTMLImageElement) || !this.panZoomEnabled) return null;
+		if (this.naturalWidth <= 0 || this.naturalHeight <= 0) return null;
+		return layoutSizeForMode(
+			this.naturalWidth,
+			this.naturalHeight,
+			this.fitWidth,
+			this.fitHeight,
+			this.fullRes,
+		);
+	}
+
+	private getCssScale(): number {
+		return transformScaleForMode(this.userScale, this.fitScale, this.fullRes);
 	}
 
 	private getViewportSize(): { width: number; height: number } {
@@ -239,14 +340,15 @@ export class LightboxModal extends Modal {
 	}
 
 	private getOverflow(): { x: number; y: number } {
-		const base = this.getBaseSize();
+		const base = this.getLayoutSize();
 		const viewport = this.getViewportSize();
 		if (!base || viewport.width <= 0 || viewport.height <= 0) {
 			return { x: 0, y: 0 };
 		}
 
-		const scaledWidth = base.width * this.scale;
-		const scaledHeight = base.height * this.scale;
+		const cssScale = this.getCssScale();
+		const scaledWidth = base.width * cssScale;
+		const scaledHeight = base.height * cssScale;
 		return {
 			x: Math.max(0, scaledWidth - viewport.width),
 			y: Math.max(0, scaledHeight - viewport.height),
@@ -285,27 +387,32 @@ export class LightboxModal extends Modal {
 	}
 
 	private setZoom(nextScale: number): void {
-		this.scale = this.clampZoom(nextScale);
+		this.userScale = this.clampZoom(nextScale);
+		this.syncImageLayout();
 		this.clampTranslate();
 		this.applyTransform();
 	}
 
 	private adjustZoom(delta: number): void {
 		if (!this.panZoomEnabled) return;
-		this.setZoom(this.scale + delta);
+		this.setZoom(this.userScale + delta);
 	}
 
 	private resetTransform(apply = true): void {
-		this.scale = 1;
+		this.userScale = 1;
 		this.translateX = 0;
 		this.translateY = 0;
 		this.isDragging = false;
-		if (apply) this.applyTransform();
+		if (apply) {
+			this.syncImageLayout();
+			this.applyTransform();
+		}
 	}
 
 	private applyTransform(updateCursor = true): void {
 		if (!this.transformEl) return;
-		this.transformEl.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
+		const cssScale = this.getCssScale();
+		this.transformEl.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${cssScale})`;
 		if (updateCursor) this.updateCursor();
 	}
 

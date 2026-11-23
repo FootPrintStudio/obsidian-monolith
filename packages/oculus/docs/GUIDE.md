@@ -243,6 +243,8 @@ FILTER applies to LOCAL folder scans, SEARCH sources, URL entries, and XIEWER re
 
 Click a tile to open the lightbox (prev/next, arrow keys, Escape, image zoom). Use **Copy name** in the toolbar to put the media file name on the clipboard (handy for Bases cover properties). Hosted videos always open in Media Extended when available. Local and direct URL videos follow **Use Media Extended for videos**.
 
+Images open at a contain-fit size (lighter decode). Zoom past ~1× swaps the layout to the native pixel size so detail stays sharp while pan/zoom remain continuous; **Reset** returns to fit.
+
 Drag any gallery tile onto a property field or editor to paste the media item's name (including extension when present). Click still opens the lightbox; a drag does not.
 
 ### Note images

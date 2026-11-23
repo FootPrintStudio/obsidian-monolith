@@ -497,16 +497,30 @@
 	justify-content: center;
 }
 
-.mg-lightbox-transform img,
-.mg-lightbox-transform video {
+.mg-lightbox-transform .mg-lightbox-media {
 	display: block;
+	object-fit: contain;
+	user-select: none;
+	-webkit-user-drag: none;
+}
+
+/* Videos / hosted posters: CSS contain-fit (no pan/zoom upgrade path). */
+.mg-lightbox-transform .mg-lightbox-media-static {
 	max-width: min(96vw, 100%);
 	max-height: calc(100vh - 9rem);
 	width: auto;
 	height: auto;
-	object-fit: contain;
-	user-select: none;
-	-webkit-user-drag: none;
+}
+
+/*
+ * Zoomable images: layout size is set in JS.
+ * Fit mode uses contain pixels so Chromium can keep a smaller decode;
+ * full-res mode uses natural pixels so zoom past ~1× stays sharp.
+ */
+.mg-lightbox-transform .mg-lightbox-media-fit,
+.mg-lightbox-transform .mg-lightbox-media-fullres {
+	max-width: none;
+	max-height: none;
 }
 
 .mg-lightbox-info {
