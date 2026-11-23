@@ -191,7 +191,7 @@ Inside the where brace: bare idents on wiki/page handles use that page’s field
 
 `null` → empty list; a non-list value → single-element list. A **list-of-lists** (e.g. map returning `actors` per movie) is **flattened one level** before filtering. Map results styled as a whole (`(actors AS button)`) keep **`AS` on each flattened element** so chips/buttons survive `unique` / where.
 
-**Concat:** `"label " + @(…)` / `"label " + filter(@(… AS …), …)` keeps the list/`AS` chips as rich fragments (does **not** stringify). Prefer a trailing space on the label.
+**Concat / join:** `"label " + @(…)` / `"label " + filter(@(… AS …), …)` keeps the list/`AS` chips as rich fragments (does **not** stringify). Prefer a trailing space on the label. **`join(…, sep)`** also keeps `AS` chips / nested lists as fragments (plain string lists still join to a string).
 
 ```markdown
 `q= filter(tags, unique)`
@@ -478,10 +478,11 @@ Returns the first truthy argument.
 
 ### `join(list, separator)`
 
-Joins list elements with a separator (default comma if omitted in expression).
+Joins list elements with a separator (default comma if omitted in expression). Plain string/number lists stay a single string. When any element is an **`AS` chip**, fragment, or nested list, `join` keeps them as **rich fragments** (same idea as `+` concat) — it does **not** stringify chips.
 
 ```markdown
 `q= join(tags, ", ")`
+`q= join(filter(@(from("Movies"), {contains(actors, this.file)}, (actors AS button)), unique, {!this.file}), ", ")`
 ```
 
 ### `lower(value)` / `upper(value)`

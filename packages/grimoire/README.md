@@ -14,6 +14,10 @@ Repository: [FootPrintStudio/obsidian-grimoire](https://github.com/FootPrintStud
 
 See **Settings → Guide** in Obsidian (or [docs/GUIDE.md](docs/GUIDE.md)) for the full language reference.
 
+## v1.0.1
+
+- **`join(list, sep)`** preserves `AS` chips / nested lists as fragments (same rich path as `+`); plain scalar lists still stringify
+
 ## v1.0 features (breaking syntax cleanup)
 
 - **`@(from("…"), {where…}?, map?)`** — flattened at-query (no braces around `from` / map); map-without-where allowed

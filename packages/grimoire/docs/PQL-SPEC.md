@@ -77,7 +77,7 @@ A frontmatter field named `file` (without `.`) is still accessible as a bare ide
 
 ### String concatenation
 
-If either operand to `+` is a string, both sides coerce to string. When either side is styled/fragments **or a list** (incl. `@` / `filter` results), build **fragments** so `AS` chips and list items survive prefixes/suffixes.
+If either operand to `+` is a string, both sides coerce to string. When either side is styled/fragments **or a list** (incl. `@` / `filter` results), build **fragments** so `AS` chips and list items survive prefixes/suffixes. **`join(list, sep)`** uses the same rich path when any element is styled/fragments/nested-list; plain scalar lists still produce a string.
 
 ### Date and duration arithmetic
 
@@ -123,7 +123,7 @@ Duration literals: `dur(1, "day")`, `dur(3, "months")`, `dur("1 day 2 hours")`.
 | `date(string \| now \| today)` | Parse ISO date string, or current time / start of today |
 | `length(v)` | String/list length |
 | `coalesce(a, b, …)` | First truthy value |
-| `join(list, sep)` | Join list with separator |
+| `join(list, sep)` | Join list with separator. Plain scalars → string. Styled/`AS` chips, fragments, or nested lists → **fragments** (same rich path as `+`; does not stringify chips). One-level flatten of styled lists like `filter`. |
 | `lower(v)` / `upper(v)` | Case-fold as string; null → null |
 | `replace(hay, needle, replacement)` | Replace all literal occurrences of `needle` (not regex); empty needle → hay unchanged |
 | `round(n)` / `round(n, digits)` | Round number; optional non-negative decimal places; non-numeric → null |
