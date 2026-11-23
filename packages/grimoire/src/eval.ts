@@ -209,24 +209,18 @@ function branchOn(cond: Value, arms: { ifTrue: Value; ifFalse: Value }): Value {
 }
 
 /**
- * Primary: `choice(cond, {ifTrue, ifFalse})` or `choice(cond, {ifTrue})`.
- * Legacy: `choice(cond, ifTrue, ifFalse)`.
+ * `choice(cond, {ifTrue, ifFalse})` or `choice(cond, {ifTrue})`.
+ * Brace branch required (no brace-less three-arg form).
  */
 function evalChoice(args: AstNode[], ctx: QueryContext): Value {
 	if (args.length === 2 && isBinaryBranchBrace(args[1]!)) {
 		return branchOn(evalNode(args[0]!, ctx), evalBinaryBranchArms(args[1]!, ctx));
 	}
-	if (args.length === 3) {
-		return fnChoice(evalNode(args[0]!, ctx), evalNode(args[1]!, ctx), evalNode(args[2]!, ctx));
-	}
-	throw new Error(
-		'choice() expects choice(cond, {ifTrue, ifFalse}), choice(cond, {ifTrue}), or legacy choice(cond, ifTrue, ifFalse)',
-	);
+	throw new Error('choice() expects choice(cond, {ifTrue, ifFalse}) or choice(cond, {ifTrue})');
 }
 
 /**
- * Primary: `exists(v, {ifTrue, ifFalse})` / `exists(v, {ifTrue})`.
- * Legacy: `exists(v)` → boolean.
+ * `exists(v)` → boolean; optional trailing branch brace.
  */
 function evalExists(args: AstNode[], ctx: QueryContext): Value {
 	if (args.length === 2 && isBinaryBranchBrace(args[1]!)) {
@@ -236,13 +230,12 @@ function evalExists(args: AstNode[], ctx: QueryContext): Value {
 		return isTruthy(evalNode(args[0]!, ctx));
 	}
 	throw new Error(
-		'exists() expects exists(value, {ifTrue, ifFalse}), exists(value, {ifTrue}), or legacy exists(value)',
+		'exists() expects exists(value) or exists(value, {ifTrue, ifFalse}) / exists(value, {ifTrue})',
 	);
 }
 
 /**
- * Primary: trailing branch brace — `any(v, {t,f})` or `any(hay, c…, {t,f})`.
- * Legacy: `any(...)` → boolean.
+ * `any(...)` → boolean; optional trailing branch brace.
  */
 function evalAny(args: AstNode[], ctx: QueryContext): Value {
 	if (args.length >= 2 && isBinaryBranchBrace(args[args.length - 1]!)) {
@@ -253,9 +246,8 @@ function evalAny(args: AstNode[], ctx: QueryContext): Value {
 }
 
 /**
- * Primary: `contains({hay, needle}, {ifTrue, ifFalse})`.
- * Also: `contains(hay, needle, {ifTrue, ifFalse})`.
- * Legacy: `contains(hay, needle)` → boolean.
+ * `contains(hay, needle)` → boolean; optional trailing branch brace.
+ * Same shapes for `econtains`. No packed `{hay, needle}` subject pair.
  */
 function evalContainsLike(
 	args: AstNode[],
@@ -263,11 +255,6 @@ function evalContainsLike(
 	match: (hay: Value, needle: Value) => boolean,
 	name: string,
 ): Value {
-	if (args.length === 2 && args[0]!.kind === "pair" && isBinaryBranchBrace(args[1]!)) {
-		const hay = evalNode(args[0]!.key, ctx);
-		const needle = evalNode(args[0]!.value, ctx);
-		return branchOn(match(hay, needle), evalBinaryBranchArms(args[1]!, ctx));
-	}
 	if (args.length === 3 && isBinaryBranchBrace(args[2]!)) {
 		return branchOn(
 			match(evalNode(args[0]!, ctx), evalNode(args[1]!, ctx)),
@@ -278,13 +265,13 @@ function evalContainsLike(
 		return match(evalNode(args[0]!, ctx), evalNode(args[1]!, ctx));
 	}
 	throw new Error(
-		`${name}() expects ${name}({hay, needle}, {ifTrue, ifFalse}), ${name}(hay, needle, {ifTrue, ifFalse}), or legacy ${name}(hay, needle)`,
+		`${name}() expects ${name}(hay, needle) or ${name}(hay, needle, {ifTrue, ifFalse})`,
 	);
 }
 
 /**
- * Primary: `inRange({value, low, high}, {below, inBand, above})` → three-way branch.
- * Legacy: `inRange(value, low, high)` → inclusive boolean (for `choice`).
+ * `inRange({value, low, high}, {below, inBand, above})` → three-way branch.
+ * `inRange(value, low, high)` → inclusive boolean (predicate form).
  */
 function evalInRange(args: AstNode[], ctx: QueryContext): Value {
 	if (
@@ -311,7 +298,7 @@ function evalInRange(args: AstNode[], ctx: QueryContext): Value {
 	}
 
 	throw new Error(
-		'inRange() expects inRange({value, low, high}, {below, inRange, above}) or legacy inRange(value, low, high)',
+		'inRange() expects inRange({value, low, high}, {below, in, above}) or inRange(value, low, high)',
 	);
 }
 

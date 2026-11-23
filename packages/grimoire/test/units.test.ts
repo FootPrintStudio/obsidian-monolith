@@ -182,13 +182,13 @@ describe("eval integration", () => {
 		).toBe("tall");
 	});
 
-	it("legacy boolean inRange still works with choice", () => {
+	it("boolean inRange works with choice brace branch", () => {
 		const ctx = createTestContext({ fields: { height: 175, minHeight: 150, maxHeight: 190 } });
-		expect(evaluateExpression('choice(inRange(height, 150, 190), "OK", "fail")', ctx)).toBe("OK");
-		expect(evaluateExpression('choice(inRange(height, minHeight, maxHeight), "OK", "fail")', ctx)).toBe(
+		expect(evaluateExpression('choice(inRange(height, 150, 190), {"OK", "fail"})', ctx)).toBe("OK");
+		expect(evaluateExpression('choice(inRange(height, minHeight, maxHeight), {"OK", "fail"})', ctx)).toBe(
 			"OK",
 		);
-		expect(evaluateExpression('choice(inRange(height, 200, 220), "OK", "fail")', ctx)).toBe("fail");
+		expect(evaluateExpression('choice(inRange(height, 200, 220), {"OK", "fail"})', ctx)).toBe("fail");
 	});
 
 	it("ternary inRange classifies dates and durations", () => {
@@ -240,7 +240,7 @@ describe("eval integration", () => {
 			),
 		).toBeNull();
 		expect(
-			evaluateExpression('choice(inRange(height, date("2000-01-01"), 10), "OK", "fail")', ctx),
+			evaluateExpression('choice(inRange(height, date("2000-01-01"), 10), {"OK", "fail"})', ctx),
 		).toBe("fail");
 	});
 

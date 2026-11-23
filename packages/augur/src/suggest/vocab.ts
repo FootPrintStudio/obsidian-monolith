@@ -18,13 +18,13 @@ export const GRIMOIRE_FUNCTIONS = [
 	},
 	{
 		label: "contains()",
-		insert: "contains({hay, needle}, {ifTrue, ifFalse})",
-		detail: "{hay, needle}, {ifTrue, ifFalse}",
+		insert: "contains(hay, needle, {ifTrue, ifFalse})",
+		detail: "hay, needle, optional {ifTrue, ifFalse}",
 	},
 	{
 		label: "econtains()",
-		insert: "econtains({hay, needle}, {ifTrue, ifFalse})",
-		detail: "{hay, needle}, {ifTrue, ifFalse}",
+		insert: "econtains(hay, needle, {ifTrue, ifFalse})",
+		detail: "hay, needle, optional {ifTrue, ifFalse}",
 	},
 	{ label: "slice()", insert: "slice()", detail: "list, start, end?" },
 	{ label: "dateformat()", insert: "dateformat()", detail: "date, format" },
@@ -64,7 +64,7 @@ export const GRIMOIRE_FUNCTIONS = [
 	},
 ] as const;
 
-/** Cross-note wiki / link-pass / `@` snippets (Grimoire 0.9.7+ / 0.9.8+). */
+/** Cross-note wiki / link-pass / `@` snippets (Grimoire 1.0). */
 export const GRIMOIRE_CROSS_NOTE = [
 	{
 		label: "[[Note]].field",
@@ -92,29 +92,34 @@ export const GRIMOIRE_CROSS_NOTE = [
 		detail: "List-of-links multi-index",
 	},
 	{
-		label: '@({from("Folder")})',
-		insert: '@({from("Folder")})',
+		label: '@(from("Folder"))',
+		insert: '@(from("Folder"))',
 		detail: "Multi-note from folder (quoted path)",
 	},
 	{
-		label: '@({from("Folder")}, {!this.file})',
-		insert: '@({from("Folder")}, {!this.file, exists(title)})',
+		label: '@(from("Folder"), {!this.file})',
+		insert: '@(from("Folder"), {!this.file, exists(title)})',
 		detail: "Where brace with !this.file exclude",
 	},
 	{
-		label: "@({from}, {where}, {map})",
-		insert: '@({from("Folder")}, {!this.file}, {this.file.name + " → " + title})',
+		label: "@(from, {where}, map)",
+		insert: '@(from("Folder"), {!this.file}, this.file.name + " → " + title)',
 		detail: "from + where + map (this = source)",
 	},
 	{
-		label: '@({from("*")})',
-		insert: '@({from("*")}, {exists(title)}, {title})',
+		label: "@(from, map)",
+		insert: '@(from("Folder"), title)',
+		detail: "Map without where (2nd non-brace → map)",
+	},
+	{
+		label: '@(from("*"))',
+		insert: '@(from("*"), {exists(title)}, title)',
 		detail: "Vault-wide from(*) — prefer folder scope",
 	},
 	{
 		label: "@ map AS pill",
-		insert: '@({from("Characters")}, {any(status)}, {(status AS pill)})',
-		detail: "Per-page AS style in map brace",
+		insert: '@(from("Characters"), {any(status)}, (status AS pill))',
+		detail: "Per-page AS style in map",
 	},
 ] as const;
 

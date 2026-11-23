@@ -407,46 +407,38 @@ class Parser {
 	}
 
 	/**
-	 * `@({from("path"|"*")}, {where…}?, {map}?)`
-	 * Brace groups are raw expression lists (not pair/tuple sugar).
+	 * `@(from("path"|"*"), {where…}?, map?)`
+	 * 2nd arg brace → where; otherwise → map. Third arg always map.
 	 */
 	private parseAtQuery(): AstNode {
 		this.expect({ type: "op", value: "@" });
 		this.expect({ type: "lparen" });
-		this.expect({ type: "lbrace" });
 		if (!this.matchIdent("from")) {
-			throw new Error('@ query requires {from("…")} as the first brace');
+			throw new Error('@ query requires from("…") as the first argument');
 		}
 		this.expect({ type: "lparen" });
 		const fromArg = this.parseExpression();
 		this.expect({ type: "rparen" });
-		this.expect({ type: "rbrace" });
 
 		let where: AstNode[] = [];
 		let map: AstNode | null = null;
 
 		if (this.match({ type: "comma" })) {
-			this.expect({ type: "lbrace" });
-			const items: AstNode[] = [];
-			if (!this.match({ type: "rbrace" })) {
-				do {
-					items.push(this.parseExpression());
-				} while (this.match({ type: "comma" }));
-				this.expect({ type: "rbrace" });
-			}
-			// Heuristic: if a third brace follows, second was where; else second is map
-			// when it looks like a single non-predicate expression… Carl’s arity is
-			// from [, where] [, map]. Distinguishing where vs map when only 2 braces:
-			// where items are typically bool calls / !this.file; map is a render expr.
-			// Spec: 2nd optional = where, 3rd optional = map. So 2 braces ⇒ where only
-			// unless we also allow `@({from}, {map})` without where — plan says
-			// (',' brace_where)? (',' brace_map)? so 2nd is always where when present.
-			where = items;
-
-			if (this.match({ type: "comma" })) {
+			if (this.peek().type === "lbrace") {
 				this.expect({ type: "lbrace" });
+				const items: AstNode[] = [];
+				if (!this.match({ type: "rbrace" })) {
+					do {
+						items.push(this.parseExpression());
+					} while (this.match({ type: "comma" }));
+					this.expect({ type: "rbrace" });
+				}
+				where = items;
+				if (this.match({ type: "comma" })) {
+					map = this.parseExpression();
+				}
+			} else {
 				map = this.parseExpression();
-				this.expect({ type: "rbrace" });
 			}
 		}
 

@@ -1,4 +1,4 @@
-# Property Query Language (PQL) — Specification v0.11
+# Property Query Language (PQL) — Specification v1.0
 
 Grimoire evaluates inline PQL expressions in Obsidian **Reading view** using the `q=` prefix (configurable).
 
@@ -6,9 +6,11 @@ Grimoire evaluates inline PQL expressions in Obsidian **Reading view** using the
 `q= default(title, "Untitled")`
 ```
 
+**v1.0** is a breaking cleanup: one call shape per function, flattened `@`, brace roles listed below. No shim for pre-1.0 syntax.
+
 ## Scope
 
-PQL is scoped to the **current note** by default. **Cross-note** reads are opt-in via bare wiki primaries, link-valued member access, and `@` multi-note queries:
+PQL reads the **current note** by default. **Cross-note** reads are opt-in via bare wiki primaries, link-valued member access, and `@` multi-note queries:
 
 | Form | Meaning |
 |------|---------|
@@ -17,7 +19,7 @@ PQL is scoped to the **current note** by default. **Cross-note** reads are opt-i
 | `[[Other Note]].file.mtime` | Reserved `file.*` on that note |
 | `linkField.member` | When `linkField` holds a wiki/path link, resolve then read `member` |
 | List-of-links `.field` | Map → list of values; index with `[0]` or `[0,4,5]` |
-| `@({from("folder")}, {where…}?, {map}?)` | Scoped multi-note query (quoted `from`; where `!` negates; map `this` = source) |
+| `@(from("folder"), {where…}?, map?)` | Scoped multi-note query (quoted `from`; where `!` negates; map `this` = source) |
 
 Missing note / field → `null` (empty output). `@` page lists hard-cap at **250**; over-cap → empty list.
 
@@ -46,7 +48,7 @@ Reserved namespace for native file metadata:
 | `file.size` | number | Bytes |
 | `file.tags` | list | Merged YAML + inline `#tags` |
 
-`this.file.*` is accepted as a deprecated alias for `file.*`.
+`this.file.*` is accepted as a deprecated alias for `file.*` on the **current** note. Inside `@` map / `filter` where, `this.` is the **source** (authoring) note.
 
 A frontmatter field named `file` (without `.`) is still accessible as a bare identifier; only `file.<member>` uses the reserved namespace.
 
@@ -65,16 +67,17 @@ A frontmatter field named `file` (without `.`) is still accessible as a bare ide
 | Category | Operators |
 |----------|-----------|
 | Arithmetic | `+` `-` `*` `/` `%` |
-| Comparison | `==` `!=` `<` `>` `<=` `>=` (inclusive range: ternary `inRange({v,lo,hi},{below,in,above})`; legacy boolean `inRange(v,lo,hi)`; numbers / dates / durations) |
+| Comparison | `==` `!=` `<` `>` `<=` `>=`; inclusive range helpers `inRange` (see Functions) |
 | Logical | `and`, `or`, `not`, `&&` |
 | Grouping | `( )` |
 | Member / index | `.property`, `[index]`, multi `[i,j,…]` |
 | Wiki primary | bare `[[linkpath]]` |
-| At-query | `@({from("…")}, …)` |
+| At-query | `@(from("…"), …)` |
+| Unary negate | `!` (where / filter predicates) |
 
 ### String concatenation
 
-If either operand to `+` is a string, both sides coerce to string.
+If either operand to `+` is a string, both sides coerce to string. When either side is styled/fragments **or a list** (incl. `@` / `filter` results), build **fragments** so `AS` chips and list items survive prefixes/suffixes.
 
 ### Date and duration arithmetic
 
@@ -96,15 +99,14 @@ Duration literals: `dur(1, "day")`, `dur(3, "months")`, `dur("1 day 2 hours")`.
 | Function | Description |
 |----------|-------------|
 | `default(v, fallback)` | Return `v` if truthy/non-empty, else `fallback` |
-| `choice(cond, {a, b})` / `choice(cond, {a})` | **Primary.** Binary branch; `{a}` ≡ `{a, ""}` |
-| `choice(cond, a, b)` | **Legacy** three-arg form |
+| `choice(cond, {a, b})` / `choice(cond, {a})` | Binary branch; `{a}` ≡ `{a, ""}`. Brace required. |
 | `select(key, {k,v}, …)` | Key lookup; `{*, fallback}` wildcard |
-| `any(v, …, {a, b}?)` | Trailing branch brace → arm; omit → boolean (one-arg non-empty / multi-arg containment) |
+| `any(v, …, {a, b}?)` | Omit branch → boolean (one-arg non-empty / multi-arg containment); trailing brace → arm |
 | `exists(v, {a, b}?)` | Same truthiness as one-arg `any`; optional binary branch |
 | `slice(list, start, end?)` | List slice |
-| `contains({hay, needle}, {a, b})` | **Primary** two-brace branch; also `contains(hay, needle, {a, b})` |
-| `contains(hay, needle)` | **Legacy** boolean |
-| `econtains({hay, needle}, {a, b})` | **Primary** (exact element / object key); legacy boolean without branch brace |
+| `contains(hay, needle)` | Boolean substring / partial list match |
+| `contains(hay, needle, {a, b})` | Same match with trailing branch |
+| `econtains(hay, needle)` / `econtains(hay, needle, {a, b})` | Exact element / object key; optional branch |
 | `dateformat(date, fmt)` | Format date (Luxon tokens aliased to moment; `O` = ordinal after day token) |
 
 ### Tier 2
@@ -116,8 +118,8 @@ Duration literals: `dur(1, "day")`, `dur(3, "months")`, `dur("1 day 2 hours")`.
 | `age(date)` / `age(date, fmt)` | Years since `date` (default), or duration-token format of elapsed span |
 | `numberformat(n, pattern)` | Number formatting (`0`, `0.00`, `,`, `%`) |
 | `conv(n, from, to)` | Unit conversion (length / mass / temperature; `ftin` → feet+inches string) |
-| `inRange({v, low, high}, {below, in, above})` | **Primary.** Inclusive three-way branch: `v < low` → `below`; `low ≤ v ≤ high` → `in`; `v > high` → `above`. Operands may be **numbers**, **dates** (incl. Epochs-backed strings/objects via `date()`-equivalent parse), or **durations** (homogeneous). Mixed / non-comparable → empty. Fantasy parse still requires Epochs + indexed calendar. Brace groups are positional triples. |
-| `inRange(v, low, high)` | **Legacy.** Inclusive boolean (`true`/`false`) with the same comparable types; keep for `choice(...)` migration |
+| `inRange({v, low, high}, {below, in, above})` | Three-way **display** branch (inclusive). Homogeneous numbers / dates / durations. Mixed → empty. |
+| `inRange(v, low, high)` | Inclusive **boolean** predicate (same comparable types) |
 | `date(string \| now \| today)` | Parse ISO date string, or current time / start of today |
 | `length(v)` | String/list length |
 | `coalesce(a, b, …)` | First truthy value |
@@ -126,8 +128,7 @@ Duration literals: `dur(1, "day")`, `dur(3, "months")`, `dur("1 day 2 hours")`.
 | `replace(hay, needle, replacement)` | Replace all literal occurrences of `needle` (not regex); empty needle → hay unchanged |
 | `round(n)` / `round(n, digits)` | Round number; optional non-negative decimal places; non-numeric → null |
 | `abs(n)` | Absolute value; non-numeric → null |
-| `filter(LIST, unique?)` / `filter(LIST, {preds…})` | List filter. `unique` = stable dedupe (first wins). Where brace predicates **AND**; `!` negates; `this.` = source note; `item` = current element; wiki/`this.file` by path identity. `unique` may precede or follow the where brace — **dedupe last**. `null` → `[]`; non-list → single-element; list-of-lists → flatten **one** level (re-wrap `AS` on children). Where braces reuse pair/tuple AST (`{pred}` singleton sugar skips empty false arm). |
-| `a + b` (concat) | When either side is styled/fragments **or a list** (incl. `@` / `filter` results), build **fragments** so `AS` chips and list items survive prefixes/suffixes. Otherwise string/number/date rules. |
+| `filter(LIST, unique?)` / `filter(LIST, {preds…})` | List filter. `unique` = stable dedupe (first wins). Where brace predicates **AND**; `!` negates; `this.` = source note; `item` = current element; wiki/`this.file` by path identity. `unique` may precede or follow the where brace — **dedupe last**. `null` → `[]`; non-list → single-element; list-of-lists → flatten **one** level (re-wrap `AS` on children). |
 
 ## `select()` syntax
 
@@ -140,23 +141,39 @@ Duration literals: `dur(1, "day")`, `dur(3, "months")`, `dur("1 day 2 hours")`.
 - Keys compared with type-aware equality
 - `{*, value}` or `{default, value}` or `{_, value}` — fallback when no key matches
 
-## Brace groups
+## Brace groups — roles
 
-| Form | AST | Used by |
-|------|-----|---------|
-| `{value}` | pair with false arm `""` | Binary true-only branches (`choice` / `any` / `exists` / `contains` / `econtains`) |
-| `{key, value}` / `{ifTrue, ifFalse}` | pair | `select(...)` arms; binary branch arms |
-| `{a, b, c}` (3+ exprs) | tuple | `inRange({value, low, high}, {below, in, above})`; `filter` where predicates |
-| `{pred}` / `{a, b}` in `filter` | pair (singleton → false arm `""` skipped) | `filter` where AND-predicates |
+| Role | Form | Used by |
+|------|------|---------|
+| Branch arms | `{t, f}` or `{t}` ≡ `{t, ""}` | `choice`; trailing branch on `any` / `exists` / `contains` / `econtains` |
+| Select arms | `{k, v}`; `{*, v}` / `{default,v}` / `{_,v}` | `select` |
+| Positional triple | `{a, b, c}` | `inRange` subject + result triples |
+| Predicate list | `{p1, p2, …}` (singleton OK; empty false arm from `{p}` skipped) | `@` where, `filter` where — **AND** |
 
-Order is positional. There is no `{name: expr}` map syntax. Binary branch braces: `{Value}` ≡ `{Value, ""}`. `inRange` stays three-way (no singleton shorthand). `filter` where braces treat pair/tuple elements as AND predicates (not branch arms).
+Order is positional. There is no `{name: expr}` map syntax. Do **not** wrap ordinary call arguments in braces.
+
+## At-query
+
+```
+@(from("path"|"*"))
+@(from("path"), {where…})
+@(from("path"), {where…}, mapExpr)
+@(from("path"), mapExpr)
+```
+
+- 2nd argument brace → where; otherwise → map.
+- Third argument is always map (requires where as 2nd).
+- Map: bare idents = matched page; `this.` = source note. Prefer `(expr AS style)` when styling.
 
 ## Query grammar
 
 ```
 expression := orExpr [ "AS" style ]
 query := expression
-braceGroup := "{" expression ("," expression)+ "}"
+at_query := "@" "(" "from" "(" string ")" ("," where_brace)? ("," expression)? ")"
+         | "@" "(" "from" "(" string ")" "," expression ")"
+where_brace := "{" where_item ("," where_item)* "}"
+braceGroup := "{" expression ("," expression)* "}"
 style := "card" | "cards" | "tag" | "tags" | "badge" | "pill" | "callout" | "progress" | "meter" | "stars" | "image" | "img" | "wiki" | "wikilink" | "button" | "buttons" | "cards-code" | "code" | "inline" | "list" | …
 ```
 
@@ -195,4 +212,4 @@ Example: `` `q= dateformat(date("2003-10-03"), "MMMM ddO, yyyy")` `` → `Octobe
 - `$=` inline JavaScript
 - ` ```dataview` block queries
 - Live Preview inline widget
-- Vault bulk migration tooling
+- Vault bulk migration tooling / old-syntax shims
