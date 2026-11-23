@@ -119,10 +119,37 @@ function fnCoalesce(...args: Value[]): Value {
 	return null;
 }
 
-function fnJoin(list: Value, sep: Value): string {
-	const inner = unwrapForTruthiness(list);
-	if (!Array.isArray(inner)) return valueToPlainString(list);
-	return inner.map((v) => coerceForConcat(v)).join(String(sep ?? ", "));
+/**
+ * Join list with separator. Plain scalars → string (prior behavior).
+ * When any element is styled/`AS`, fragments, or a nested list, build
+ * fragments so chips survive — same rich path as `+` (Carl / G0).
+ */
+function fnJoin(list: Value, sep: Value): Value {
+	const sepStr = String(sep ?? ", ");
+	// Top-level styled list: flatten with AS re-wrap (like filter), don't unwrap.
+	const items = normalizeFilterList(list);
+	if (items.length === 0) {
+		const inner = unwrapForTruthiness(list);
+		if (!Array.isArray(inner) && !isPqStyled(list)) return valueToPlainString(list);
+		return "";
+	}
+
+	const needsRich = items.some(
+		(v) => isPqStyled(v) || isPqFragments(v) || Array.isArray(v),
+	);
+	if (!needsRich) {
+		return items.map((v) => coerceForConcat(v)).join(sepStr);
+	}
+
+	const parts: Value[] = [];
+	for (let i = 0; i < items.length; i++) {
+		if (i > 0 && sepStr.length > 0) parts.push(sepStr);
+		const el = items[i]!;
+		if (isPqFragments(el)) parts.push(...flattenFragmentParts(el));
+		else if (Array.isArray(el)) parts.push(...expandConcatOperand(el));
+		else parts.push(el);
+	}
+	return pqFragments(parts);
 }
 
 function fnLower(value: Value): Value {

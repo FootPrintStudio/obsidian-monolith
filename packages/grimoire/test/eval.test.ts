@@ -885,3 +885,118 @@ describe("concat preserves @ lists and AS chips", () => {
 		}
 	});
 });
+
+describe("join() preserves AS chips (G0)", () => {
+	it("still stringifies plain lists", () => {
+		const ctx = createTestContext({ fields: { tags: ["a", "b", "c"] } });
+		expect(evaluateExpression('join(tags, ", ")', ctx)).toBe("a, b, c");
+		expect(evaluateExpression("join(tags, \"|\")", ctx)).toBe("a|b|c");
+	});
+
+	it("keeps AS buttons through join(filter(@ AS, unique, !this.file), sep)", () => {
+		const alice = createTestContext({
+			fields: { title: "Alice" },
+			file: {
+				name: "Alice",
+				path: "Actors/Alice.md",
+				folder: "Actors",
+				mtime: pqDate(1),
+				ctime: pqDate(1),
+				size: 1,
+				tags: [],
+			},
+		});
+		const bob = createTestContext({
+			fields: { title: "Bob" },
+			file: {
+				name: "Bob",
+				path: "Actors/Bob.md",
+				folder: "Actors",
+				mtime: pqDate(1),
+				ctime: pqDate(1),
+				size: 1,
+				tags: [],
+			},
+		});
+		const carol = createTestContext({
+			fields: { title: "Carol" },
+			file: {
+				name: "Carol",
+				path: "Actors/Carol.md",
+				folder: "Actors",
+				mtime: pqDate(1),
+				ctime: pqDate(1),
+				size: 1,
+				tags: [],
+			},
+		});
+		const movie1 = createTestContext({
+			fields: { actors: ["[[Alice]]", "[[Bob]]", "[[Carol]]"] },
+			file: {
+				name: "M1",
+				path: "Movies/M1.md",
+				folder: "Movies",
+				mtime: pqDate(1),
+				ctime: pqDate(1),
+				size: 1,
+				tags: [],
+			},
+		});
+		const movie2 = createTestContext({
+			fields: { actors: ["[[Alice]]", "[[Bob]]"] },
+			file: {
+				name: "M2",
+				path: "Movies/M2.md",
+				folder: "Movies",
+				mtime: pqDate(1),
+				ctime: pqDate(1),
+				size: 1,
+				tags: [],
+			},
+		});
+		const roster = [alice, bob, carol, movie1, movie2];
+		const ctx = createTestContext({
+			fields: alice.fields,
+			file: alice.file,
+			resolveNote: (linkpath) => {
+				const key = linkpath.replace(/\.md$/i, "").split("/").pop() ?? linkpath;
+				return roster.find((n) => n.file.name === key) ?? null;
+			},
+			listNotes: (fromArg) => {
+				const folder = fromArg.replace(/\/$/, "");
+				return roster.filter(
+					(n) => n.file.folder === folder || n.file.path.startsWith(`${folder}/`),
+				);
+			},
+		});
+
+		const v = evaluateExpression(
+			'join(filter(@(from("Movies"), {contains(actors, this.file)}, (actors AS button)), unique, {!this.file}), ", ")',
+			ctx,
+		);
+		expect(isPqFragments(v)).toBe(true);
+		if (isPqFragments(v)) {
+			const styled = v.parts.filter(isPqStyled);
+			expect(styled.map((s) => (isPqStyled(s) ? s.value : null))).toEqual([
+				"[[Bob]]",
+				"[[Carol]]",
+			]);
+			expect(styled.every((s) => isPqStyled(s) && s.style === "button")).toBe(true);
+			expect(v.parts).toContain(", ");
+		}
+	});
+
+	it("keeps AS chips when joining a styled list expression", () => {
+		const ctx = createTestContext({
+			fields: { cast: ["[[Bob]]", "[[Carol]]"] },
+		});
+		const v = evaluateExpression("join(cast AS button, \" · \")", ctx);
+		expect(isPqFragments(v)).toBe(true);
+		if (isPqFragments(v)) {
+			const styled = v.parts.filter(isPqStyled);
+			expect(styled).toHaveLength(2);
+			expect(styled.every((s) => isPqStyled(s) && s.style === "button")).toBe(true);
+			expect(v.parts).toContain(" · ");
+		}
+	});
+});

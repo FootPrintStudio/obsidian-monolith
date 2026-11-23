@@ -41,7 +41,7 @@ export const GRIMOIRE_FUNCTIONS = [
 	{ label: "dur()", insert: "dur()", detail: "n, unit or text" },
 	{ label: "length()", insert: "length()", detail: "value" },
 	{ label: "coalesce()", insert: "coalesce()", detail: "a, b, …" },
-	{ label: "join()", insert: "join()", detail: "list, sep" },
+	{ label: "join()", insert: "join()", detail: "list, sep — keeps AS chips" },
 	{ label: "lower()", insert: "lower()", detail: "string → lowercase" },
 	{ label: "upper()", insert: "upper()", detail: "string → uppercase" },
 	{ label: "replace()", insert: "replace()", detail: "hay, needle, replacement" },
