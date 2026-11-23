@@ -35,7 +35,7 @@ export class OracleModule {
 	onunload(): void {
 		this.host.app.workspace.iterateAllLeaves((leaf) => {
 			if (leaf.view instanceof MarkdownView) {
-				leaf.view.containerEl.querySelector(".navinote-panel")?.remove();
+				leaf.view.containerEl.querySelector(".oracle-panel, .navinote-panel")?.remove();
 			}
 		});
 	}
