@@ -18,3 +18,13 @@
 	opacity: 0.85;
 	font-size: var(--font-ui-smaller);
 }
+
+.monolith-module-docs-tabs {
+	margin: 0.5rem 0 0.75rem;
+}
+
+.monolith-module-doc-panel {
+	max-height: min(70vh, 40rem);
+	overflow: auto;
+	padding: 0.25rem 0.15rem 0.75rem;
+}
