@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { moment } from "obsidian";
-import { isPqFragments, isPqStyled } from "../src/coerce";
+import { isPqFragments, isPqStyled, pqStyled } from "../src/coerce";
 import { pqDate } from "../src/dates";
 import { createTestContext, evaluateExpression, evaluateExpressionSafe } from "../src/eval";
 import { parseExpression } from "../src/parse";
@@ -717,5 +717,26 @@ describe("filter()", () => {
 			cast: ["[[Alice]]", "[[Bob]]"],
 		});
 		expect(evaluateExpression("filter(cast, {item != this.file})", ctx)).toEqual(["[[Bob]]"]);
+	});
+
+	it("preserves AS styles when flattening styled list-of-lists (map shape)", () => {
+		const nested = [
+			pqStyled(["[[Alice]]", "[[Bob]]"], "button"),
+			pqStyled(["[[Carol]]", "[[Bob]]"], "button"),
+		];
+		const ctx = actorSource({ nested });
+		const out = evaluateExpression(
+			"filter(nested, unique, {!this.file})",
+			ctx,
+		) as import("../src/types").Value[];
+		expect(out).toHaveLength(2);
+		expect(isPqStyled(out[0]!)).toBe(true);
+		expect(isPqStyled(out[1]!)).toBe(true);
+		if (isPqStyled(out[0]!) && isPqStyled(out[1]!)) {
+			expect(out[0].style).toBe("button");
+			expect(out[0].value).toBe("[[Bob]]");
+			expect(out[1].style).toBe("button");
+			expect(out[1].value).toBe("[[Carol]]");
+		}
 	});
 });

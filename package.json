@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-monolith",
-	"version": "0.5.0",
+	"version": "0.5.1",
 	"description": "Monolith \u2014 FootPrintStudio Obsidian mega-plugin (single BRAT artifact, module enable flags).",
 	"private": true,
 	"type": "module",

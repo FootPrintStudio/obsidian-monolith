@@ -363,18 +363,43 @@ function extractFilterWherePreds(node: AstNode): AstNode[] {
 	return [node];
 }
 
-/** null → []; non-list → [x]; list-of-lists → flatten one level. */
+/**
+ * One-level flatten for filter. Plain nested lists spread as-is.
+ * `PqStyled` wrapping a list (e.g. `@` map `(actors AS button)`) spreads
+ * children **re-wrapped** with the same style so chips survive filter/unique.
+ */
+function flattenFilterElement(el: Value): Value[] {
+	if (isPqStyled(el)) {
+		if (Array.isArray(el.value)) {
+			return el.value.map((child) => {
+				if (isPqStyled(child) || isPqFragments(child)) return child;
+				return pqStyled(child, el.style);
+			});
+		}
+		return [el];
+	}
+	if (Array.isArray(el)) return el;
+	return [el];
+}
+
+/** null → []; non-list → [x]; list-of-lists → flatten one level (keep AS styles). */
 function normalizeFilterList(list: Value): Value[] {
-	const inner = unwrapForTruthiness(list);
-	if (inner === null || inner === undefined) return [];
-	if (!Array.isArray(inner)) return [inner];
-	const hasNested = inner.some((el) => Array.isArray(unwrapForTruthiness(el)));
-	if (!hasNested) return inner;
+	if (list === null || list === undefined) return [];
+	// Top-level styled list: flatten with style, don't unwrap away the AS.
+	if (isPqStyled(list)) {
+		if (Array.isArray(list.value)) return flattenFilterElement(list);
+		return [list];
+	}
+	if (!Array.isArray(list)) return [list];
+
+	const needsFlatten = list.some(
+		(el) => Array.isArray(el) || (isPqStyled(el) && Array.isArray(el.value)),
+	);
+	if (!needsFlatten) return list;
+
 	const out: Value[] = [];
-	for (const el of inner) {
-		const u = unwrapForTruthiness(el);
-		if (Array.isArray(u)) out.push(...u);
-		else out.push(el);
+	for (const el of list) {
+		out.push(...flattenFilterElement(el));
 	}
 	return out;
 }

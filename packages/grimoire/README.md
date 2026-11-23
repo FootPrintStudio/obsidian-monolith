@@ -16,7 +16,7 @@ See **Settings → Guide** in Obsidian (or [docs/GUIDE.md](docs/GUIDE.md)) for t
 
 ## v0.9.11 features
 
-- **`filter(LIST, …)`** — `unique` stable dedupe; where-brace predicates (`!this.file`, `item`); one-level flatten of list-of-lists
+- **`filter(LIST, …)`** — `unique` stable dedupe; where-brace predicates (`!this.file`, `item`); one-level flatten of list-of-lists (preserves `AS` styles on flattened elements)
 - PQL-SPEC **v0.11**
 
 ## v0.9.10 features

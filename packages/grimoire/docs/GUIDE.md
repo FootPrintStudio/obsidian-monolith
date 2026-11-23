@@ -188,7 +188,7 @@ List filter for ordinary frontmatter lists and cross-note / `@` map results (e.g
 
 Inside the where brace: bare idents on wiki/page handles use that page’s fields; **`this.…`** is the **source** note; **`item`** is the current element. Wiki / `this.file` compare by path identity, so `!this.file` or `item != this.file` excludes the source note.
 
-`null` → empty list; a non-list value → single-element list. A **list-of-lists** (e.g. map returning `actors` per movie) is **flattened one level** before filtering.
+`null` → empty list; a non-list value → single-element list. A **list-of-lists** (e.g. map returning `actors` per movie) is **flattened one level** before filtering. Map results styled as a whole (`(actors AS button)`) keep **`AS` on each flattened element** so chips/buttons survive `unique` / where.
 
 ```markdown
 `q= filter(tags, unique)`
