@@ -22,6 +22,7 @@ import {
 	probeUrlContentType,
 	urlDisplayName,
 } from "./urlMedia";
+import { isRemoteHostAllowed } from "./remoteAllowlist";
 import {
 	fetchXiewerSearch,
 	xiewerKindAllows,
@@ -98,6 +99,15 @@ async function resolveUrlEntry(
 			warning: {
 				line: entry.line,
 				message: "Remote media disabled in plugin settings.",
+			},
+		};
+	}
+
+	if (!isRemoteHostAllowed(entry.url, settings.remoteMediaHostAllowlist)) {
+		return {
+			warning: {
+				line: entry.line,
+				message: "Remote host not on the allowlist (Oculus settings).",
 			},
 		};
 	}

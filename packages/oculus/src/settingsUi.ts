@@ -19,12 +19,29 @@ export function renderOculusSettings(containerEl: HTMLElement, ctx: OculusSettin
 
 	new Setting(containerEl)
 		.setName("Allow remote media")
-		.setDesc("Enable URL: entries for remote images, direct video links, and hosted platforms.")
+		.setDesc(
+			"Enable URL: entries for remote images, direct video links, and hosted platforms. Off by default (author URLs can hit LAN/metadata).",
+		)
 		.addToggle((toggle) =>
 			toggle.setValue(settings.allowRemoteImages).onChange(async (value) => {
 				settings.allowRemoteImages = value;
 				await ctx.persist();
 			}),
+		);
+
+	new Setting(containerEl)
+		.setName("Remote media host allowlist")
+		.setDesc(
+			"Optional. Comma or newline separated hostnames (e.g. cdn.example.com, *.github.io). Empty = any host when remote media is on.",
+		)
+		.addTextArea((area) =>
+			area
+				.setPlaceholder("cdn.example.com\n*.github.io")
+				.setValue(settings.remoteMediaHostAllowlist)
+				.onChange(async (value) => {
+					settings.remoteMediaHostAllowlist = value;
+					await ctx.persist();
+				}),
 		);
 
 	new Setting(containerEl)
@@ -137,8 +154,8 @@ export function renderOculusSettings(containerEl: HTMLElement, ctx: OculusSettin
 		.setName("CollectionXiewer API URL")
 		.setDesc(
 			xiewerPrivate
-				? "Loopback/private base URL for XIEWER: sources (default http://127.0.0.1:47821). CollectionXiewer must be running."
-				: "Warning: this host is not loopback/private. The local Xiewer session token may be sent off-machine. Prefer http://127.0.0.1:47821 or a LAN private address.",
+				? "Loopback/private base URL for XIEWER: sources (default http://127.0.0.1:47821). CollectionXiewer must be running. Non-private hosts are refused at request time (token stays local)."
+				: "Blocked: this host is not loopback/private. XIEWER: requests will not send the local token off-machine. Use http://127.0.0.1:47821 or a LAN private address.",
 		)
 		.addText((text) =>
 			text

@@ -73,6 +73,20 @@ export class VisageModule {
 		document.body.style.setProperty("--deck-image-height", this.settings.deckImageHeight);
 	}
 
+	clearCssVars(): void {
+		document.body.style.removeProperty("--deck-gap");
+		document.body.style.removeProperty("--deck-padding");
+		document.body.style.removeProperty("--deck-image-height");
+	}
+
+	onunload(): void {
+		this.clearCssVars();
+		this.tabsBlocks.clear();
+		this.tabIndexCache.clear();
+		this.pendingTabLink = null;
+		this.pendingTabTarget = null;
+	}
+
 	rerenderPreviews(): void {
 		this.applyCssVars();
 		this.host.app.workspace.iterateAllLeaves((leaf) => {

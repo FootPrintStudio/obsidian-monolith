@@ -22,8 +22,9 @@ Buttons matches commands by **display name** (case-insensitive), not by command 
 
 ## Features
 
+- **Desktop only** — quiet no-op on Obsidian mobile (no Notice spam).
 - **Desktop apps:** browse XDG `.desktop` entries (`~/.local/share/applications`, `/usr/share/applications`, Flatpak exports, etc.).
-- **Custom shell:** free-form commands for apps without a desktop file or that need special flags.
+- **Custom shell:** free-form commands for apps without a desktop file or that need special flags; each shell launch asks for confirm (settings sync/share risk).
 - **CollectionXiewer opt-in seed:** a disabled launcher template is offered once (not forced). Enable it only when you use CollectionXiewer.
 - Launch order for desktop entries: Exec line → `gtk-launch` → `gio launch` (all detached; AppImage env cleaned).
 - Processes are detached so Obsidian is not blocked by the launched app.

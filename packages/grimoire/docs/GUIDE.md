@@ -529,6 +529,13 @@ How results appear in Reading view:
 
 When a result contains **both** markdown markers and HTML tags, it is rendered as Markdown so formatting like `**bold**` still applies. Pure HTML strings without markdown markers still use the HTML path.
 
+### Trust model (HTML + `cmd:`)
+
+Grimoire trusts **vault note content** the same way Obsidian Reading view does:
+
+- **HTML output** (`innerHTML` for pure-HTML results and HTML inside styled chips) can inject markup from frontmatter / note text. Safe for a sole-user or trusted vault; treat synced/shared vaults as trusted authors only.
+- **`AS button` with `cmd:plugin:command-id`** runs that Obsidian command with **no extra confirm**. Prefer Monolith/Beacon command ids you configured; do not paste untrusted `cmd:` targets into notes. Beacon **shell** launchers still show a confirm dialog before spawning.
+
 ### Display styles (`AS`)
 
 Apply **`AS <style>`** after any subexpression to wrap that value in a Pretty-style layout. Root `expr AS card` still styles the whole result. A frontmatter field named `as` still works (`as AS card`).

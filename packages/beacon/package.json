@@ -1,9 +1,12 @@
 {
 	"name": "@monolith/beacon",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"private": true,
 	"type": "module",
 	"main": "src/module.ts",
-	"exports": { ".": "./src/module.ts", "./types": "./src/types.ts" },
+	"exports": {
+		".": "./src/module.ts",
+		"./types": "./src/types.ts"
+	},
 	"license": "MIT"
 }

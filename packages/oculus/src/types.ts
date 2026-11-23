@@ -16,6 +16,11 @@ export type MediaKind = "image" | "video";
 
 export interface MediaGallerySettings {
 	allowRemoteImages: boolean;
+	/**
+	 * Optional host allowlist for remote `URL:` media (comma/newline separated).
+	 * Empty = any host when Allow remote media is on. Supports `*.example.com`.
+	 */
+	remoteMediaHostAllowlist: string;
 	remoteLoadTimeoutMs: number;
 	validateRemoteContentType: boolean;
 	showCaptions: boolean;
@@ -32,7 +37,8 @@ export interface MediaGallerySettings {
 }
 
 export const DEFAULT_SETTINGS: MediaGallerySettings = {
-	allowRemoteImages: true,
+	allowRemoteImages: false,
+	remoteMediaHostAllowlist: "",
 	remoteLoadTimeoutMs: 30000,
 	validateRemoteContentType: false,
 	showCaptions: true,
