@@ -19,12 +19,65 @@
 	font-size: var(--font-ui-smaller);
 }
 
+/* Module README / Guide tab bar (shared; replaces per-package *-settings-tabs) */
 .monolith-module-docs-tabs {
+	display: flex;
+	gap: 0;
 	margin: 0.5rem 0 0.75rem;
+	border-bottom: 1px solid var(--background-modifier-border);
 }
 
+.monolith-module-docs-tab {
+	padding: 0.45rem 0.9rem;
+	cursor: pointer;
+	color: var(--text-muted);
+	border-bottom: 2px solid transparent;
+	margin-bottom: -1px;
+	user-select: none;
+}
+
+.monolith-module-docs-tab:hover {
+	color: var(--text-normal);
+}
+
+.monolith-module-docs-tab.is-active {
+	color: var(--text-accent);
+	border-bottom-color: var(--interactive-accent);
+	font-weight: 600;
+}
+
+/* Module README / Guide panels (shared; replaces per-package *-readme-panel / *-guide-panel) */
 .monolith-module-doc-panel {
 	max-height: min(70vh, 40rem);
 	overflow: auto;
 	padding: 0.25rem 0.15rem 0.75rem;
+	padding-right: 0.5rem;
+}
+
+.monolith-module-doc-panel h1,
+.monolith-module-doc-panel h2,
+.monolith-module-doc-panel h3 {
+	margin-top: 1.2em;
+}
+
+.monolith-module-doc-panel pre {
+	overflow-x: auto;
+}
+
+.monolith-module-doc-panel table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 0.5em 0;
+}
+
+.monolith-module-doc-panel th,
+.monolith-module-doc-panel td {
+	border: 1px solid var(--background-modifier-border);
+	padding: 0.35em 0.6em;
+	text-align: left;
+	vertical-align: top;
+}
+
+.monolith-module-doc-panel th {
+	background: var(--background-secondary);
 }

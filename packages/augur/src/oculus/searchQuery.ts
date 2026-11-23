@@ -1,5 +1,6 @@
-export function parseMediaTitleQueries(value: string): string[] | null {
-	const queries = value.split(",").map((query) => query.trim());
-	if (queries.length === 0 || queries.some((query) => !query)) return null;
-	return queries;
-}
+/** Re-export Oculus search helpers so Augur authoring stays in sync with runtime. */
+export {
+	mediaTitleMatchesQuery,
+	mediaTitleMatchesQueries,
+	parseMediaTitleQueries,
+} from "../../../oculus/src/searchQuery";

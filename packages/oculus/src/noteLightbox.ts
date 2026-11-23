@@ -6,7 +6,7 @@ import { openLightbox } from "./views/lightbox";
 const NATIVE_VIEWER_EVENTS = ["click", "mousedown", "dblclick", "pointerdown"] as const;
 
 const SKIP_ANCESTOR =
-	".mg-block, .mg-lightbox, .mg-lightbox-modal, .mg-builder-modal, .modal, .prompt, .menu, .suggestion-container, .workspace-tab-header, .nav-files-container, .tree-item, .setting-item, .clickable-icon, pre, code";
+	".mg-block, .mg-lightbox, .mg-lightbox-modal, .augur-builder-modal, .modal, .prompt, .menu, .suggestion-container, .workspace-tab-header, .nav-files-container, .tree-item, .setting-item, .clickable-icon, pre, code";
 
 const MARKDOWN_ROOT =
 	".markdown-preview-view, .markdown-source-view, .markdown-rendered, .markdown-embed, .cm-editor";

@@ -436,34 +436,6 @@ body {
 	flex-basis: 100%;
 }
 
-/* Settings tabs */
-.visage-settings-tabs {
-	display: flex;
-	gap: 0;
-	margin: 0.75rem 0 1rem;
-	border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.visage-settings-tab {
-	padding: 0.45rem 0.9rem;
-	cursor: pointer;
-	color: var(--text-muted);
-	border-bottom: 2px solid transparent;
-	margin-bottom: -1px;
-}
-
-.visage-settings-tab.is-active {
-	color: var(--text-normal);
-	border-bottom-color: var(--interactive-accent);
-}
-
-.visage-readme-panel,
-.visage-guide-panel {
-	padding-top: 0.5rem;
-	max-height: 70vh;
-	overflow: auto;
-}
-
 @media (prefers-reduced-motion: reduce) {
 	.markdown-preview-view li.visage-card,
 	.markdown-preview-view li.visage-subcard {

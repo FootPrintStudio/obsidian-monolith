@@ -26,18 +26,15 @@ export type ModuleDocKey =
 	| "oracle"
 	| "beacon";
 
-const DOCS: Record<
-	ModuleDocKey,
-	{ readme: string; guide?: string; cssPrefix: string }
-> = {
-	grimoire: { readme: GRIMOIRE_README, guide: GRIMOIRE_GUIDE, cssPrefix: "pq" },
-	epochs: { readme: EPOCHS_README, guide: EPOCHS_GUIDE, cssPrefix: "epochs" },
-	visage: { readme: VISAGE_README, guide: VISAGE_GUIDE, cssPrefix: "visage" },
-	oculus: { readme: OCULUS_README, guide: OCULUS_GUIDE, cssPrefix: "mg" },
-	augur: { readme: AUGUR_README, guide: AUGUR_GUIDE, cssPrefix: "augur" },
-	lexicon: { readme: LEXICON_README, guide: LEXICON_GUIDE, cssPrefix: "lxn" },
-	oracle: { readme: ORACLE_README, cssPrefix: "navinote" },
-	beacon: { readme: BEACON_README, cssPrefix: "sal" },
+const DOCS: Record<ModuleDocKey, { readme: string; guide?: string }> = {
+	grimoire: { readme: GRIMOIRE_README, guide: GRIMOIRE_GUIDE },
+	epochs: { readme: EPOCHS_README, guide: EPOCHS_GUIDE },
+	visage: { readme: VISAGE_README, guide: VISAGE_GUIDE },
+	oculus: { readme: OCULUS_README, guide: OCULUS_GUIDE },
+	augur: { readme: AUGUR_README, guide: AUGUR_GUIDE },
+	lexicon: { readme: LEXICON_README, guide: LEXICON_GUIDE },
+	oracle: { readme: ORACLE_README },
+	beacon: { readme: BEACON_README },
 };
 
 export function renderModuleDocsTabBar(
@@ -46,9 +43,8 @@ export function renderModuleDocsTabBar(
 	activeTab: ModuleDocsTabId,
 	onSelect: (tab: ModuleDocsTabId) => void,
 ): void {
-	const { cssPrefix, guide } = DOCS[moduleKey];
+	const { guide } = DOCS[moduleKey];
 	container.empty();
-	container.addClass(`${cssPrefix}-settings-tabs`);
 	container.addClass("monolith-module-docs-tabs");
 
 	const tabs: { id: ModuleDocsTabId; label: string }[] = [
@@ -59,7 +55,7 @@ export function renderModuleDocsTabBar(
 
 	for (const tab of tabs) {
 		const btn = container.createDiv({
-			cls: `${cssPrefix}-settings-tab${activeTab === tab.id ? " is-active" : ""}`,
+			cls: `monolith-module-docs-tab${activeTab === tab.id ? " is-active" : ""}`,
 			text: tab.label,
 		});
 		btn.addEventListener("click", () => {
@@ -77,10 +73,7 @@ export function renderModuleDocPanel(
 ): void {
 	const doc = DOCS[moduleKey];
 	const markdown = tab === "readme" ? doc.readme : doc.guide;
-	const panelClass =
-		tab === "readme" ? `${doc.cssPrefix}-readme-panel` : `${doc.cssPrefix}-guide-panel`;
 	container.empty();
-	container.addClass(panelClass);
 	container.addClass("monolith-module-doc-panel");
 	if (!markdown) {
 		container.createEl("p", { text: "No Guide for this module." });

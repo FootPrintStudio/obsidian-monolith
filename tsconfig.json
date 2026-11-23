@@ -33,10 +33,6 @@
 		"resolveJsonModule": true
 	},
 	"include": ["src/**/*.ts", "packages/*/src/**/*.ts", "packages/*/src/**/*.d.ts"],
-	"exclude": [
-		"packages/*/src/settings.ts",
-		"packages/*/src/readmeTab.ts",
-		"node_modules"
-	]
+	"exclude": ["node_modules"]
 }
 
