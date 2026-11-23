@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "cursor/**"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm test
+      - run: npm run test:host
+      - run: npm run build
+      - name: Check BRAT artifacts
+        run: |
+          test -f main.js
+          test -f manifest.json
+          test -f styles.css
+          test -f versions.json
+          node -e "const m=require('./manifest.json'); if(m.id!=='monolith') process.exit(1)"

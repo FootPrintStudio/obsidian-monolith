@@ -1,0 +1,203 @@
+import type { App, Plugin, TFile } from "obsidian";
+import {
+	DEFAULT_SETTINGS,
+	type AugurSettings,
+	type GalleryViewType,
+	type MediaFilter,
+	type TabAlign,
+	type TabPosition,
+} from "./types";
+
+export const OCULUS_ID = "oculus";
+export const VISAGE_ID = "visage";
+export const GRIMOIRE_ID = "grimoire";
+export const LEXICON_ID = "lexicon-nexus";
+export const EPOCHS_ID = "epochs";
+export const MEDIA_EXTENDED_ID = "media-extended";
+
+export interface EpochsCalendarSuggest {
+	id: string;
+	name: string;
+	path: string;
+	hasMonths: boolean;
+}
+
+/** In-process Monolith companion bag (preferred over legacy plugin-id duck types). */
+export interface MonolithCompanionBag {
+	modules: {
+		grimoire?: boolean;
+		epochs?: boolean;
+		visage?: boolean;
+		oculus?: boolean;
+		lexicon?: boolean;
+	};
+	grimoire?: { inlinePrefix?: string };
+	visage?: {
+		defaultPosition?: string;
+		defaultAlign?: string;
+		defaultTabTitle1?: string;
+		defaultTabTitle2?: string;
+	};
+	oculus?: { defaultView?: string; defaultFilter?: string };
+	lexicon?: { dictionaryFolder?: string };
+	listEpochsCalendars?: () => EpochsCalendarSuggest[];
+}
+
+let monolithBag: MonolithCompanionBag | null = null;
+
+export function setMonolithCompanions(bag: MonolithCompanionBag | null): void {
+	monolithBag = bag;
+}
+
+export function getMonolithCompanions(): MonolithCompanionBag | null {
+	return monolithBag;
+}
+
+type AppWithPlugins = App & {
+	plugins: {
+		enabledPlugins: Set<string>;
+		plugins: Record<
+			string,
+			Plugin & {
+				settings?: Record<string, unknown>;
+				api?: {
+					listCalendars?: () => Array<{
+						id?: unknown;
+						name?: unknown;
+						path?: unknown;
+						months?: unknown;
+					}>;
+				};
+			}
+		>;
+	};
+};
+
+function pluginsApi(app: App): AppWithPlugins["plugins"] | null {
+	return (app as AppWithPlugins).plugins ?? null;
+}
+
+export function isPluginEnabled(app: App, id: string): boolean {
+	if (monolithBag) {
+		if (id === OCULUS_ID) return Boolean(monolithBag.modules.oculus);
+		if (id === VISAGE_ID) return Boolean(monolithBag.modules.visage);
+		if (id === GRIMOIRE_ID) return Boolean(monolithBag.modules.grimoire);
+		if (id === EPOCHS_ID) return Boolean(monolithBag.modules.epochs);
+		if (id === LEXICON_ID) return Boolean(monolithBag.modules.lexicon);
+	}
+	const plugins = pluginsApi(app);
+	return Boolean(plugins?.enabledPlugins.has(id) && plugins.plugins[id]);
+}
+
+function companionSettings(app: App, id: string): Record<string, unknown> | null {
+	if (monolithBag) {
+		if (id === OCULUS_ID && monolithBag.modules.oculus) {
+			return (monolithBag.oculus as Record<string, unknown>) ?? {};
+		}
+		if (id === VISAGE_ID && monolithBag.modules.visage) {
+			return (monolithBag.visage as Record<string, unknown>) ?? {};
+		}
+		if (id === GRIMOIRE_ID && monolithBag.modules.grimoire) {
+			return (monolithBag.grimoire as Record<string, unknown>) ?? {};
+		}
+		if (id === LEXICON_ID && monolithBag.modules.lexicon) {
+			return (monolithBag.lexicon as Record<string, unknown>) ?? {};
+		}
+		return null;
+	}
+	if (!isPluginEnabled(app, id)) return null;
+	return pluginsApi(app)?.plugins[id]?.settings ?? null;
+}
+
+export function isMediaExtendedAvailable(app: App): boolean {
+	return isPluginEnabled(app, MEDIA_EXTENDED_ID);
+}
+
+export function resolveOculusDefaults(app: App, fallback: AugurSettings): {
+	view: GalleryViewType;
+	filter: MediaFilter;
+} {
+	const settings = companionSettings(app, OCULUS_ID);
+	const view = settings?.defaultView;
+	const filter = settings?.defaultFilter;
+	return {
+		view: typeof view === "string" ? (view as GalleryViewType) : fallback.defaultView,
+		filter: typeof filter === "string" ? (filter as MediaFilter) : fallback.defaultFilter,
+	};
+}
+
+export function resolveVisageDefaults(app: App, fallback: AugurSettings): {
+	defaultPosition: TabPosition;
+	defaultAlign: TabAlign;
+	defaultTabTitle1: string;
+	defaultTabTitle2: string;
+} {
+	const settings = companionSettings(app, VISAGE_ID);
+	return {
+		defaultPosition:
+			typeof settings?.defaultPosition === "string"
+				? (settings.defaultPosition as TabPosition)
+				: fallback.defaultTabPosition,
+		defaultAlign:
+			typeof settings?.defaultAlign === "string"
+				? (settings.defaultAlign as TabAlign)
+				: fallback.defaultTabAlign,
+		defaultTabTitle1:
+			typeof settings?.defaultTabTitle1 === "string"
+				? settings.defaultTabTitle1
+				: fallback.defaultTabTitle1,
+		defaultTabTitle2:
+			typeof settings?.defaultTabTitle2 === "string"
+				? settings.defaultTabTitle2
+				: fallback.defaultTabTitle2,
+	};
+}
+
+export function resolveGrimoirePrefix(app: App, fallback: string): string {
+	const settings = companionSettings(app, GRIMOIRE_ID);
+	const prefix = settings?.inlinePrefix;
+	if (typeof prefix === "string" && prefix.trim()) return prefix;
+	return fallback || DEFAULT_SETTINGS.grimoirePrefix;
+}
+
+export function resolveLexiconFolder(app: App, fallback: string): string {
+	const settings = companionSettings(app, LEXICON_ID);
+	const folder = settings?.dictionaryFolder;
+	if (typeof folder === "string" && folder.trim()) return folder.replace(/\/+$/, "");
+	return fallback.replace(/\/+$/, "") || DEFAULT_SETTINGS.lexiconFolder;
+}
+
+export function frontmatterKeys(app: App, file: TFile | null): string[] {
+	if (!file) return [];
+	const cache = app.metadataCache.getFileCache(file);
+	const fm = cache?.frontmatter;
+	if (!fm) return [];
+	return Object.keys(fm).filter((key) => key !== "position");
+}
+
+/**
+ * Live calendar ids from Epochs when available.
+ * Prefer Monolith in-process list; else legacy plugins.epochs.api.
+ */
+export function listEpochsCalendars(app: App): EpochsCalendarSuggest[] {
+	if (monolithBag) {
+		if (!monolithBag.modules.epochs) return [];
+		return monolithBag.listEpochsCalendars?.() ?? [];
+	}
+	if (!isPluginEnabled(app, EPOCHS_ID)) return [];
+	const api = pluginsApi(app)?.plugins[EPOCHS_ID]?.api;
+	const listed = api?.listCalendars?.();
+	if (!Array.isArray(listed)) return [];
+	const out: EpochsCalendarSuggest[] = [];
+	for (const cal of listed) {
+		const id = typeof cal.id === "string" ? cal.id.trim() : "";
+		if (!id) continue;
+		out.push({
+			id,
+			name: typeof cal.name === "string" && cal.name.trim() ? cal.name : id,
+			path: typeof cal.path === "string" ? cal.path : "",
+			hasMonths: Array.isArray(cal.months) && cal.months.length > 0,
+		});
+	}
+	return out;
+}

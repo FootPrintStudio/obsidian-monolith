@@ -1,0 +1,17 @@
+{
+	"name": "@monolith/grimoire",
+	"version": "0.9.11",
+	"private": true,
+	"type": "module",
+	"main": "src/module.ts",
+	"types": "src/module.ts",
+	"exports": {
+		".": "./src/module.ts",
+		"./types": "./src/types.ts",
+		"./epochsBridge": "./src/epochsBridge.ts"
+	},
+	"scripts": {
+		"test": "vitest run"
+	},
+	"license": "MIT"
+}

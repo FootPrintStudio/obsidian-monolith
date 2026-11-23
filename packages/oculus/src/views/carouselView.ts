@@ -1,0 +1,91 @@
+import type { Component } from "obsidian";
+import { resolveCarouselHeightPx } from "../parseBlock";
+import type { GalleryItem, MediaGallerySettings } from "../types";
+import { createMediaTile, appendGalleryTileMedia } from "./renderGallery";
+import { unobserveDeferredMedia } from "./deferredMedia";
+
+export function renderCarousel(
+	container: HTMLElement,
+	items: GalleryItem[],
+	settings: MediaGallerySettings,
+	carouselHeightPx: number | null,
+	showThumbnails: boolean,
+	onOpen: (index: number) => void,
+	component: Component,
+): void {
+	const wrap = container.createDiv({ cls: "mg-view mg-view-carousel" });
+	const height = resolveCarouselHeightPx(carouselHeightPx);
+	wrap.style.setProperty("--mg-carousel-height", `${height}px`);
+	if (showThumbnails) wrap.addClass("mg-view-carousel-has-thumbs");
+
+	const track = wrap.createDiv({ cls: "mg-carousel-track" });
+	const thumbStrip = showThumbnails ? wrap.createDiv({ cls: "mg-carousel-thumbs" }) : null;
+	const controls = wrap.createDiv({ cls: "mg-carousel-controls" });
+	const prevBtn = controls.createEl("button", { text: "←", cls: "mg-carousel-btn" });
+	const indicator = controls.createSpan({ cls: "mg-carousel-indicator" });
+	const nextBtn = controls.createEl("button", { text: "→", cls: "mg-carousel-btn" });
+
+	let activeIndex = 0;
+	const thumbEls: HTMLElement[] = [];
+
+	const buildThumbs = (): void => {
+		if (!thumbStrip) return;
+		items.forEach((item, index) => {
+			const thumb = thumbStrip.createDiv({
+				cls: `mg-carousel-thumb${item.urlVariant === "hosted" ? " mg-carousel-thumb-hosted" : ""}`,
+				attr: { role: "button", tabindex: "0", "aria-label": item.name },
+			});
+			thumbEls.push(thumb);
+			const thumbMedia = thumb.createDiv({ cls: "mg-carousel-thumb-media" });
+			appendGalleryTileMedia(thumbMedia, item, component);
+			const select = (): void => {
+				activeIndex = index;
+				renderSlide();
+			};
+			thumb.addEventListener("click", (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				select();
+			});
+			thumb.addEventListener("keydown", (event) => {
+				if (event.key !== "Enter" && event.key !== " ") return;
+				event.preventDefault();
+				select();
+			});
+		});
+	};
+
+	const syncThumbs = (): void => {
+		for (let index = 0; index < thumbEls.length; index++) {
+			const thumb = thumbEls[index];
+			if (!thumb) continue;
+			const isActive = index === activeIndex;
+			thumb.classList.toggle("is-active", isActive);
+			if (isActive) thumb.setAttr("aria-current", "true");
+			else thumb.removeAttribute("aria-current");
+		}
+	};
+
+	const renderSlide = (): void => {
+		const previousMedia = track.querySelector<HTMLImageElement | HTMLVideoElement>("img, video");
+		if (previousMedia) unobserveDeferredMedia(component, previousMedia);
+		track.empty();
+		const item = items[activeIndex];
+		if (!item) return;
+		createMediaTile(track, item, settings, onOpen, activeIndex, component);
+		indicator.textContent = `${activeIndex + 1} / ${items.length}`;
+		syncThumbs();
+	};
+
+	prevBtn.addEventListener("click", () => {
+		activeIndex = (activeIndex - 1 + items.length) % items.length;
+		renderSlide();
+	});
+	nextBtn.addEventListener("click", () => {
+		activeIndex = (activeIndex + 1) % items.length;
+		renderSlide();
+	});
+
+	buildThumbs();
+	renderSlide();
+}

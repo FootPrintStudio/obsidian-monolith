@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+*.js.map
+data.json
+dist/
+coverage/
+.npm/
+packages/*/.test-build/

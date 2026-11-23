@@ -1,0 +1,42 @@
+{
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@monolith/epochs": ["packages/epochs/src/module.ts"],
+			"@monolith/epochs/*": ["packages/epochs/src/*"],
+			"@monolith/grimoire": ["packages/grimoire/src/module.ts"],
+			"@monolith/grimoire/*": ["packages/grimoire/src/*"],
+			"@monolith/visage": ["packages/visage/src/module.ts"],
+			"@monolith/visage/*": ["packages/visage/src/*"],
+			"@monolith/oculus": ["packages/oculus/src/module.ts"],
+			"@monolith/oculus/*": ["packages/oculus/src/*"],
+			"@monolith/augur": ["packages/augur/src/module.ts"],
+			"@monolith/augur/*": ["packages/augur/src/*"],
+			"@monolith/lexicon": ["packages/lexicon/src/module.ts"],
+			"@monolith/lexicon/*": ["packages/lexicon/src/*"],
+			"@monolith/oracle": ["packages/oracle/src/module.ts"],
+			"@monolith/oracle/*": ["packages/oracle/src/*"],
+			"@monolith/beacon": ["packages/beacon/src/module.ts"],
+			"@monolith/beacon/*": ["packages/beacon/src/*"]
+		},
+		"inlineSourceMap": true,
+		"inlineSources": true,
+		"module": "ESNext",
+		"target": "ES2021",
+		"allowJs": true,
+		"noImplicitAny": true,
+		"moduleResolution": "bundler",
+		"importHelpers": true,
+		"lib": ["DOM", "DOM.Iterable", "ES2021"],
+		"strictNullChecks": true,
+		"skipLibCheck": true,
+		"resolveJsonModule": true
+	},
+	"include": ["src/**/*.ts", "packages/*/src/**/*.ts", "packages/*/src/**/*.d.ts"],
+	"exclude": [
+		"packages/*/src/settings.ts",
+		"packages/*/src/readmeTab.ts",
+		"node_modules"
+	]
+}
+

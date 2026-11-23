@@ -1,0 +1,414 @@
+.pq-query-source,
+.cm-content .pq-hl-prefix,
+.cm-line .pq-hl-prefix {
+	font-family: var(--font-monospace);
+}
+
+.cm-line :is(.pq-hl-prefix, .pq-hl-kw, .pq-hl-string, .pq-hl-number, .pq-hl-ident, .pq-hl-fn, .pq-hl-op, .pq-hl-punct) {
+	font-family: var(--font-monospace);
+}
+
+.pq-hl-prefix {
+	color: var(--text-muted);
+	font-weight: 600;
+}
+
+.pq-hl-kw {
+	color: var(--color-purple);
+}
+
+.pq-hl-string {
+	color: var(--text-success);
+}
+
+.pq-hl-number {
+	color: var(--color-orange);
+}
+
+.pq-hl-ident {
+	color: var(--text-normal);
+}
+
+.pq-hl-fn {
+	color: var(--text-accent);
+	font-weight: 500;
+}
+
+.pq-hl-op {
+	color: var(--text-muted);
+}
+
+.pq-hl-punct {
+	color: var(--text-faint);
+}
+
+.pq-hl-text {
+	color: inherit;
+}
+
+.pq-code-shield {
+	font-family: var(--font-monospace);
+	font-size: var(--code-size);
+}
+
+.pq-inline {
+	display: inline;
+}
+
+.grim-fragments {
+	display: inline;
+}
+
+.grim-fragment {
+	display: inline;
+}
+
+.grim-fragment-styled {
+	vertical-align: baseline;
+}
+
+.pq-error {
+	color: var(--text-error);
+	font-family: var(--font-monospace);
+	font-size: 0.9em;
+}
+
+.pq-result {
+	display: inline;
+}
+
+.pq-result :is(p, ul, ol) {
+	display: inline;
+	margin: 0;
+}
+
+.pq-settings-tabs {
+	display: flex;
+	gap: 0;
+	margin: 0.75rem 0 1rem;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.pq-settings-tab {
+	padding: 0.45rem 0.9rem;
+	cursor: pointer;
+	color: var(--text-muted);
+	border-bottom: 2px solid transparent;
+	margin-bottom: -1px;
+	user-select: none;
+}
+
+.pq-settings-tab:hover {
+	color: var(--text-normal);
+}
+
+.pq-settings-tab.is-active {
+	color: var(--text-accent);
+	border-bottom-color: var(--interactive-accent);
+	font-weight: 600;
+}
+
+.pq-readme-panel,
+.pq-guide-panel {
+	max-height: 70vh;
+	overflow-y: auto;
+	padding-right: 0.5rem;
+}
+
+.pq-readme-panel h1,
+.pq-readme-panel h2,
+.pq-readme-panel h3,
+.pq-guide-panel h1,
+.pq-guide-panel h2,
+.pq-guide-panel h3 {
+	margin-top: 1.2em;
+}
+
+.pq-readme-panel pre,
+.pq-guide-panel pre {
+	overflow-x: auto;
+}
+
+.pq-guide-panel table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 0.5em 0;
+}
+
+.pq-guide-panel th,
+.pq-guide-panel td {
+	border: 1px solid var(--background-modifier-border);
+	padding: 0.35em 0.6em;
+	text-align: left;
+	vertical-align: top;
+}
+
+.pq-guide-panel th {
+	background: var(--background-secondary);
+}
+
+/* Grimoire display styles (`AS card`, `AS tag`, `AS button`, …) */
+
+.grim-button {
+	display: inline-block;
+	padding: 5px 10px;
+	margin: 2px;
+	border-radius: 5px;
+	text-decoration: none;
+	font-size: var(--font-size-small);
+}
+
+.grim-internal-link {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: 1px solid var(--interactive-accent);
+}
+
+.grim-external-link {
+	background-color: var(--background-secondary);
+	color: var(--text-normal);
+	border: 1px solid var(--background-modifier-border);
+}
+
+.grim-command-button {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: 1px solid var(--interactive-accent);
+	cursor: pointer;
+}
+
+.grim-command-button:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+.grim-internal-link:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+.grim-external-link:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.grim-card-container {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 5px;
+	align-items: center;
+	vertical-align: baseline;
+}
+
+.grim-card {
+	display: inline-flex;
+	align-items: center;
+	padding: 5px 10px;
+	border-radius: 5px;
+	font-size: var(--font-size-small);
+}
+
+.grim-text-card {
+	background-color: var(--background-secondary);
+	color: var(--text-normal);
+}
+
+.grim-tag-card {
+	background-color: var(--tag-background);
+	color: var(--tag-color);
+}
+
+.grim-tag-hash {
+	color: var(--tag-color);
+	margin-right: 2px;
+}
+
+.grim-clickable {
+	cursor: pointer;
+}
+
+.grim-clickable:hover {
+	filter: brightness(1.08);
+}
+
+.grim-code-card {
+	background-color: var(--background-modifier-border);
+	color: var(--text-muted);
+	font-family: var(--font-monospace);
+	border: 1px solid var(--background-modifier-border-hover);
+}
+
+.grim-code-dot {
+	opacity: 0.7;
+	margin-right: 1px;
+}
+
+.grim-inline {
+	font-size: var(--font-size-small);
+	color: var(--text-normal);
+}
+
+.pq-result ul.grim-list {
+	display: block;
+	margin: 0.25em 0 0.25em 1.2em;
+	padding: 0;
+	font-size: var(--font-size-small);
+}
+
+.grim-list li {
+	margin: 0.1em 0;
+}
+
+.grim-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	margin: 1px 2px;
+	border-radius: 999px;
+	font-size: var(--font-size-smaller, 0.85em);
+	font-weight: 600;
+	line-height: 1.4;
+	vertical-align: baseline;
+}
+
+.grim-badge-muted {
+	background-color: var(--background-secondary);
+	color: var(--text-muted);
+}
+
+.grim-badge-success {
+	background-color: rgba(var(--color-green-rgb, 68, 207, 110), 0.18);
+	color: var(--color-green);
+}
+
+.grim-badge-warn {
+	background-color: rgba(var(--color-orange-rgb, 233, 151, 63), 0.18);
+	color: var(--color-orange);
+}
+
+.grim-badge-danger {
+	background-color: rgba(var(--color-red-rgb, 251, 70, 76), 0.18);
+	color: var(--color-red);
+}
+
+.grim-callout {
+	display: block;
+	margin: 0.35em 0;
+	padding: 0.55em 0.75em;
+	border-radius: var(--radius-s, 5px);
+	border-left: 4px solid var(--text-accent);
+	background: var(--background-secondary);
+	font-size: var(--font-size-small);
+}
+
+.grim-callout-title {
+	font-weight: 700;
+	text-transform: uppercase;
+	font-size: 0.75em;
+	letter-spacing: 0.04em;
+	margin-bottom: 0.25em;
+	color: var(--text-muted);
+}
+
+.grim-callout-note {
+	border-left-color: var(--color-blue, var(--text-accent));
+}
+
+.grim-callout-tip {
+	border-left-color: var(--color-cyan, var(--text-accent));
+}
+
+.grim-callout-warning {
+	border-left-color: var(--color-orange);
+}
+
+.grim-callout-error {
+	border-left-color: var(--color-red);
+}
+
+.grim-progress {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4em;
+	vertical-align: middle;
+	min-width: 6em;
+}
+
+.grim-progress-track {
+	display: inline-block;
+	width: 5.5em;
+	height: 0.55em;
+	border-radius: 999px;
+	background: var(--background-modifier-border);
+	overflow: hidden;
+	vertical-align: middle;
+}
+
+.grim-progress-fill {
+	display: block;
+	height: 100%;
+	background: var(--interactive-accent);
+	border-radius: 999px;
+}
+
+.grim-progress-label {
+	font-size: var(--font-size-smaller, 0.85em);
+	color: var(--text-muted);
+}
+
+.grim-meter {
+	display: inline-flex;
+	gap: 0.05em;
+	vertical-align: baseline;
+	letter-spacing: 0.02em;
+}
+
+.grim-meter-star {
+	color: var(--text-faint);
+	font-size: 0.95em;
+}
+
+.grim-meter-star.is-filled {
+	color: var(--color-orange, var(--text-accent));
+}
+
+/* Image style hosts must be block-level so embeds can fill the column/cell. */
+.pq-inline:has(.grim-image-host),
+.grim-fragment-styled:has(.grim-image-host),
+.grim-image-host,
+.grim-image-wrap {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+}
+
+.grim-image-wrap > p {
+	margin: 0;
+}
+
+.grim-styled .image-embed,
+.grim-styled .internal-embed.image-embed,
+.grim-image-wrap .image-embed,
+.grim-image-wrap .internal-embed.image-embed {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+}
+
+.grim-styled .image-embed img,
+.grim-image-wrap .image-embed img,
+.grim-image {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	height: auto;
+	object-fit: contain;
+	border-radius: var(--radius-s, 5px);
+}
+
+.grim-wiki {
+	color: var(--link-color);
+	text-decoration: underline;
+	text-decoration-color: var(--link-decoration-color, var(--link-color));
+	cursor: pointer;
+}
+
+.grim-wiki-external {
+	color: var(--link-external-color, var(--link-color));
+}

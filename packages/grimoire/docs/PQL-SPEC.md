@@ -1,0 +1,197 @@
+# Property Query Language (PQL) — Specification v0.11
+
+Grimoire evaluates inline PQL expressions in Obsidian **Reading view** using the `q=` prefix (configurable).
+
+```markdown
+`q= default(title, "Untitled")`
+```
+
+## Scope
+
+PQL is scoped to the **current note** by default. **Cross-note** reads are opt-in via bare wiki primaries, link-valued member access, and `@` multi-note queries:
+
+| Form | Meaning |
+|------|---------|
+| `[[Other Note]]` | Page handle (resolves via `metadataCache.getFirstLinkpathDest`) |
+| `[[Other Note]].field` | Frontmatter / nested field on that note |
+| `[[Other Note]].file.mtime` | Reserved `file.*` on that note |
+| `linkField.member` | When `linkField` holds a wiki/path link, resolve then read `member` |
+| List-of-links `.field` | Map → list of values; index with `[0]` or `[0,4,5]` |
+| `@({from("folder")}, {where…}?, {map}?)` | Scoped multi-note query (quoted `from`; where `!` negates; map `this` = source) |
+
+Missing note / field → `null` (empty output). `@` page lists hard-cap at **250**; over-cap → empty list.
+
+## Context model
+
+### Frontmatter fields
+
+Bare identifiers read YAML frontmatter:
+
+| Syntax | Meaning |
+|--------|---------|
+| `title` | Frontmatter field `title` |
+| `this.title` | Same (optional alias) |
+
+### Page metadata (`file.*`)
+
+Reserved namespace for native file metadata:
+
+| Field | Type | Source |
+|-------|------|--------|
+| `file.name` | string | Basename without extension |
+| `file.path` | string | Vault path |
+| `file.folder` | string | Parent folder |
+| `file.ctime` | date | Creation time |
+| `file.mtime` | date | Modification time |
+| `file.size` | number | Bytes |
+| `file.tags` | list | Merged YAML + inline `#tags` |
+
+`this.file.*` is accepted as a deprecated alias for `file.*`.
+
+A frontmatter field named `file` (without `.`) is still accessible as a bare identifier; only `file.<member>` uses the reserved namespace.
+
+## Value types
+
+| Type | Notes |
+|------|-------|
+| `null` | Empty/missing; `None` literal alias |
+| `boolean`, `number`, `string` | |
+| `date` | Internal ms epoch; formatted via Obsidian moment |
+| `duration` | Internal ms length |
+| `list` | YAML arrays |
+
+## Operators
+
+| Category | Operators |
+|----------|-----------|
+| Arithmetic | `+` `-` `*` `/` `%` |
+| Comparison | `==` `!=` `<` `>` `<=` `>=` (inclusive range: ternary `inRange({v,lo,hi},{below,in,above})`; legacy boolean `inRange(v,lo,hi)`; numbers / dates / durations) |
+| Logical | `and`, `or`, `not`, `&&` |
+| Grouping | `( )` |
+| Member / index | `.property`, `[index]`, multi `[i,j,…]` |
+| Wiki primary | bare `[[linkpath]]` |
+| At-query | `@({from("…")}, …)` |
+
+### String concatenation
+
+If either operand to `+` is a string, both sides coerce to string.
+
+### Date and duration arithmetic
+
+| Expression | Result |
+|------------|--------|
+| `date - date` | duration |
+| `date + duration` | date |
+| `date - duration` | date |
+| `duration ± duration` | duration |
+| `duration * number` | duration |
+| `duration / number` | duration |
+
+Duration literals: `dur(1, "day")`, `dur(3, "months")`, `dur("1 day 2 hours")`.
+
+## Functions
+
+### Tier 1 — core
+
+| Function | Description |
+|----------|-------------|
+| `default(v, fallback)` | Return `v` if truthy/non-empty, else `fallback` |
+| `choice(cond, {a, b})` / `choice(cond, {a})` | **Primary.** Binary branch; `{a}` ≡ `{a, ""}` |
+| `choice(cond, a, b)` | **Legacy** three-arg form |
+| `select(key, {k,v}, …)` | Key lookup; `{*, fallback}` wildcard |
+| `any(v, …, {a, b}?)` | Trailing branch brace → arm; omit → boolean (one-arg non-empty / multi-arg containment) |
+| `exists(v, {a, b}?)` | Same truthiness as one-arg `any`; optional binary branch |
+| `slice(list, start, end?)` | List slice |
+| `contains({hay, needle}, {a, b})` | **Primary** two-brace branch; also `contains(hay, needle, {a, b})` |
+| `contains(hay, needle)` | **Legacy** boolean |
+| `econtains({hay, needle}, {a, b})` | **Primary** (exact element / object key); legacy boolean without branch brace |
+| `dateformat(date, fmt)` | Format date (Luxon tokens aliased to moment; `O` = ordinal after day token) |
+
+### Tier 2
+
+| Function | Description |
+|----------|-------------|
+| `dur(n, unit)` / `dur(string)` | Duration value |
+| `durationformat(dur, fmt?)` | Format duration; without `fmt`, human-readable. With `fmt`, Luxon/Dataview duration tokens (`y`, `M`, `d`, `h`, `m`, `s`, …) plus `O` ordinals. Literal text in single quotes. Not the same token set as `dateformat`. |
+| `age(date)` / `age(date, fmt)` | Years since `date` (default), or duration-token format of elapsed span |
+| `numberformat(n, pattern)` | Number formatting (`0`, `0.00`, `,`, `%`) |
+| `conv(n, from, to)` | Unit conversion (length / mass / temperature; `ftin` → feet+inches string) |
+| `inRange({v, low, high}, {below, in, above})` | **Primary.** Inclusive three-way branch: `v < low` → `below`; `low ≤ v ≤ high` → `in`; `v > high` → `above`. Operands may be **numbers**, **dates** (incl. Epochs-backed strings/objects via `date()`-equivalent parse), or **durations** (homogeneous). Mixed / non-comparable → empty. Fantasy parse still requires Epochs + indexed calendar. Brace groups are positional triples. |
+| `inRange(v, low, high)` | **Legacy.** Inclusive boolean (`true`/`false`) with the same comparable types; keep for `choice(...)` migration |
+| `date(string \| now \| today)` | Parse ISO date string, or current time / start of today |
+| `length(v)` | String/list length |
+| `coalesce(a, b, …)` | First truthy value |
+| `join(list, sep)` | Join list with separator |
+| `lower(v)` / `upper(v)` | Case-fold as string; null → null |
+| `replace(hay, needle, replacement)` | Replace all literal occurrences of `needle` (not regex); empty needle → hay unchanged |
+| `round(n)` / `round(n, digits)` | Round number; optional non-negative decimal places; non-numeric → null |
+| `abs(n)` | Absolute value; non-numeric → null |
+| `filter(LIST, unique?)` / `filter(LIST, {preds…})` | List filter. `unique` = stable dedupe (first wins). Where brace predicates **AND**; `!` negates; `this.` = source note; `item` = current element; wiki/`this.file` by path identity. `unique` may precede or follow the where brace — **dedupe last**. `null` → `[]`; non-list → single-element; list-of-lists → flatten **one** level. Where braces reuse pair/tuple AST (`{pred}` singleton sugar skips empty false arm). |
+
+## `select()` syntax
+
+```markdown
+`q= select(3, {1, "Red"}, {2, "Green"}, {3, pageColour}, {*, "Unknown"})`
+```
+
+- First argument: lookup key (string or number)
+- Remaining arguments: braced `{ key, value }` pairs
+- Keys compared with type-aware equality
+- `{*, value}` or `{default, value}` or `{_, value}` — fallback when no key matches
+
+## Brace groups
+
+| Form | AST | Used by |
+|------|-----|---------|
+| `{value}` | pair with false arm `""` | Binary true-only branches (`choice` / `any` / `exists` / `contains` / `econtains`) |
+| `{key, value}` / `{ifTrue, ifFalse}` | pair | `select(...)` arms; binary branch arms |
+| `{a, b, c}` (3+ exprs) | tuple | `inRange({value, low, high}, {below, in, above})`; `filter` where predicates |
+| `{pred}` / `{a, b}` in `filter` | pair (singleton → false arm `""` skipped) | `filter` where AND-predicates |
+
+Order is positional. There is no `{name: expr}` map syntax. Binary branch braces: `{Value}` ≡ `{Value, ""}`. `inRange` stays three-way (no singleton shorthand). `filter` where braces treat pair/tuple elements as AND predicates (not branch arms).
+
+## Query grammar
+
+```
+expression := orExpr [ "AS" style ]
+query := expression
+braceGroup := "{" expression ("," expression)+ "}"
+style := "card" | "cards" | "tag" | "tags" | "badge" | "pill" | "callout" | "progress" | "meter" | "stars" | "image" | "img" | "wiki" | "wikilink" | "button" | "buttons" | "cards-code" | "code" | "inline" | "list" | …
+```
+
+`AS` is an expression postfix (available on call arguments and inside parentheses), not a binary operator. `as` as a field name is still an identifier (`as AS card`). Root `expr AS card` styles the whole result; `default(location AS card, "*Unknown*")` styles only the location branch. Concat mixes require parens: `"**Location:** " + (location AS card)`.
+
+Hyphenated styles (`cards-code`) are a single style token.
+
+## Output rendering
+
+| Result | Pipeline |
+|--------|----------|
+| Markdown markers / wikilinks (even with HTML tags like `<br>`) | `MarkdownRenderer.render` |
+| HTML tags only (no markdown markers) | `innerHTML` |
+| Plain text / numbers | text node |
+| `null` | empty |
+| Styled value (`AS …`) | Text pills, tags, badges, callouts, progress, meter, image, wiki, buttons, or list |
+| Fragments (plain + styled concat) | Inline mix of markdown/HTML/text and styled chips |
+| Error | red inline `pq-error` |
+
+## Date formatting tokens
+
+PQL accepts **Luxon-style aliases** (Dataview habit) and maps them to Obsidian moment:
+
+| Luxon alias | moment |
+|-------------|--------|
+| `yyyy` | `YYYY` |
+| `dd` | `DD` |
+| `ddO` / `dO` | `Do` (ordinal day) |
+| `HH`, `mm`, `ss` | unchanged |
+
+Example: `` `q= dateformat(file.mtime, "yyyy-MM-dd HH:mm:ss")` ``
+Example: `` `q= dateformat(date("2003-10-03"), "MMMM ddO, yyyy")` `` → `October 3rd, 2003`
+
+## Non-goals
+
+- `$=` inline JavaScript
+- ` ```dataview` block queries
+- Live Preview inline widget
+- Vault bulk migration tooling
