@@ -14,6 +14,11 @@ Repository: [FootPrintStudio/obsidian-grimoire](https://github.com/FootPrintStud
 
 See **Settings → Guide** in Obsidian (or [docs/GUIDE.md](docs/GUIDE.md)) for the full language reference.
 
+## v0.9.11 features
+
+- **`filter(LIST, …)`** — `unique` stable dedupe; where-brace predicates (`!this.file`, `item`); one-level flatten of list-of-lists
+- PQL-SPEC **v0.11**
+
 ## v0.9.10 features
 
 - **String/number helpers:** `lower` / `upper`, `replace`, `round` / `abs`

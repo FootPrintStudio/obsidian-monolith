@@ -609,3 +609,113 @@ describe("string / number helpers", () => {
 		expect(evaluateExpression('choice(round(height) == 181, "tall", "short")', ctx)).toBe("tall");
 	});
 });
+
+describe("filter()", () => {
+	const alice = createTestContext({
+		fields: { title: "Alice" },
+		file: {
+			name: "Alice",
+			path: "Actors/Alice.md",
+			folder: "Actors",
+			mtime: pqDate(1),
+			ctime: pqDate(1),
+			size: 1,
+			tags: [],
+		},
+	});
+	const bob = createTestContext({
+		fields: { title: "Bob" },
+		file: {
+			name: "Bob",
+			path: "Actors/Bob.md",
+			folder: "Actors",
+			mtime: pqDate(1),
+			ctime: pqDate(1),
+			size: 1,
+			tags: [],
+		},
+	});
+	const carol = createTestContext({
+		fields: { title: "Carol" },
+		file: {
+			name: "Carol",
+			path: "Actors/Carol.md",
+			folder: "Actors",
+			mtime: pqDate(1),
+			ctime: pqDate(1),
+			size: 1,
+			tags: [],
+		},
+	});
+
+	function actorSource(fields: Record<string, import("../src/types").Value> = {}) {
+		return createTestContext({
+			fields: { ...fields },
+			file: alice.file,
+			resolveNote: (linkpath) => {
+				const key = linkpath.replace(/\.md$/i, "").split("/").pop() ?? linkpath;
+				if (key === "Alice") return alice;
+				if (key === "Bob") return bob;
+				if (key === "Carol") return carol;
+				return null;
+			},
+		});
+	}
+
+	it("unique stably dedupes a plain list", () => {
+		const ctx = createTestContext({ fields: { tags: ["a", "b", "a", "c", "b"] } });
+		expect(evaluateExpression("filter(tags, unique)", ctx)).toEqual(["a", "b", "c"]);
+	});
+
+	it("excludes self with !this.file", () => {
+		const ctx = actorSource({
+			cast: ["[[Alice]]", "[[Bob]]", "[[Carol]]", "[[Alice]]"],
+		});
+		// Both Alice entries match the source note — both dropped (no unique yet).
+		expect(evaluateExpression("filter(cast, {!this.file})", ctx)).toEqual([
+			"[[Bob]]",
+			"[[Carol]]",
+		]);
+	});
+
+	it("unique + !this.file yields co-star shaped list", () => {
+		const ctx = actorSource({
+			cast: ["[[Alice]]", "[[Bob]]", "[[Carol]]", "[[Bob]]", "[[Alice]]"],
+		});
+		expect(evaluateExpression("filter(cast, unique, {!this.file})", ctx)).toEqual([
+			"[[Bob]]",
+			"[[Carol]]",
+		]);
+		expect(evaluateExpression("filter(cast, {!this.file}, unique)", ctx)).toEqual([
+			"[[Bob]]",
+			"[[Carol]]",
+		]);
+	});
+
+	it("flattens one level of list-of-lists (cross-note map shape)", () => {
+		const ctx = actorSource({
+			nested: [
+				["[[Alice]]", "[[Bob]]"],
+				["[[Carol]]", "[[Bob]]"],
+			],
+		});
+		expect(evaluateExpression("filter(nested, unique, {!this.file})", ctx)).toEqual([
+			"[[Bob]]",
+			"[[Carol]]",
+		]);
+	});
+
+	it("treats null as empty and non-list as single-element", () => {
+		const ctx = actorSource({ solo: "[[Bob]]" });
+		expect(evaluateExpression("filter(missing, unique)", ctx)).toEqual([]);
+		expect(evaluateExpression("filter(solo, {!this.file})", ctx)).toEqual(["[[Bob]]"]);
+		expect(evaluateExpression("filter(solo, unique)", ctx)).toEqual(["[[Bob]]"]);
+	});
+
+	it("supports item != this.file", () => {
+		const ctx = actorSource({
+			cast: ["[[Alice]]", "[[Bob]]"],
+		});
+		expect(evaluateExpression("filter(cast, {item != this.file})", ctx)).toEqual(["[[Bob]]"]);
+	});
+});

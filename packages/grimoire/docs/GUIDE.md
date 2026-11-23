@@ -1,6 +1,6 @@
 # Grimoire — Language Guide
 
-Complete reference for **Property Query Language (PQL)** as implemented in Grimoire v0.9.10. Cross-note wiki / `@` queries and Decision B (Grimoire **or** Dataview for Carl) are in scope.
+Complete reference for **Property Query Language (PQL)** as implemented in Grimoire v0.9.11. Cross-note wiki / `@` queries and Decision B (Grimoire **or** Dataview for Carl) are in scope.
 
 Expressions live in inline code with the **`q=`** prefix (configurable under Settings):
 
@@ -175,6 +175,27 @@ Result is a **list** (join with `join` / index with `[0]`). Map expressions may 
 ```
 
 Prefer folder-scoped `from("…")` inside Visage cards. Hard cap **250** pages — over-cap returns empty.
+
+### `filter(LIST, …)`
+
+List filter for ordinary frontmatter lists and cross-note / `@` map results (e.g. co-star lists).
+
+| Form | Behavior |
+|------|----------|
+| `filter(LIST, unique)` | Drop duplicates (stable order: first wins) |
+| `filter(LIST, {preds…})` | Keep items where brace predicates **AND**; `!` negates |
+| `filter(LIST, unique, {preds…})` | Same; `unique` may appear before or after the where brace — **dedupe last** |
+
+Inside the where brace: bare idents on wiki/page handles use that page’s fields; **`this.…`** is the **source** note; **`item`** is the current element. Wiki / `this.file` compare by path identity, so `!this.file` or `item != this.file` excludes the source note.
+
+`null` → empty list; a non-list value → single-element list. A **list-of-lists** (e.g. map returning `actors` per movie) is **flattened one level** before filtering.
+
+```markdown
+`q= filter(tags, unique)`
+`q= filter(cast, {!this.file})`
+`q= filter(cast, unique, {!this.file})`
+`q= filter(@({from("Movies")}, {contains(actors, this.file)}, {actors}), unique, {!this.file})`
+```
 
 ### Grouping
 

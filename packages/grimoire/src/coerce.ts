@@ -105,6 +105,48 @@ export function flattenFragmentParts(value: Value): Value[] {
 	return [value];
 }
 
+/** FileMeta-shaped object from `file` / `this.file` (path + name). */
+function isFileMetaLike(value: Value): value is { path: string; name: string } {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		!isPqDate(value) &&
+		!isPqDuration(value) &&
+		!isPqStyled(value) &&
+		!isPqFragments(value) &&
+		!Array.isArray(value) &&
+		typeof (value as { path?: unknown }).path === "string" &&
+		typeof (value as { name?: unknown }).name === "string"
+	);
+}
+
+/** Identity keys for wiki handles / paths / FileMeta — used by `filter` and `==`/`!=`. */
+function linkIdentityKeys(value: Value): string[] | null {
+	const u = unwrapForTruthiness(value);
+	if (u === null || u === undefined) return null;
+	if (isFileMetaLike(u)) {
+		const noExt = u.path.replace(/\.md$/i, "");
+		const base = noExt.split("/").pop() ?? u.name;
+		return [...new Set([u.path, noExt, u.name, base].map((k) => k.toLowerCase()))];
+	}
+	if (typeof u !== "string") return null;
+	const trimmed = u.trim();
+	if (!trimmed) return null;
+	const wiki = /^\[\[([^\]|#]+)(?:\|[^\]]*)?\]\]$/.exec(trimmed);
+	if (wiki) {
+		const path = wiki[1]!.trim().replace(/\.md$/i, "");
+		const base = path.split("/").pop() ?? path;
+		return [...new Set([path, base, `${path}.md`].map((k) => k.toLowerCase()))];
+	}
+	// Path-shaped (folder/note or *.md) without brackets.
+	if (trimmed.includes("/") || /\.md$/i.test(trimmed)) {
+		const path = trimmed.replace(/\.md$/i, "");
+		const base = path.split("/").pop() ?? path;
+		return [...new Set([path, base, `${path}.md`].map((k) => k.toLowerCase()))];
+	}
+	return null;
+}
+
 export function valuesEqual(a: Value, b: Value): boolean {
 	if (a === b) return true;
 	const ua = unwrapForTruthiness(a);
@@ -115,6 +157,14 @@ export function valuesEqual(a: Value, b: Value): boolean {
 	const nb = Number(ub);
 	if (!Number.isNaN(na) && !Number.isNaN(nb) && String(ua).trim() !== "" && String(ub).trim() !== "") {
 		return na === nb;
+	}
+	// Wiki / FileMeta identity (e.g. `item != this.file`, stable filter dedupe).
+	const ka = linkIdentityKeys(ua);
+	const kb = linkIdentityKeys(ub);
+	if (ka && kb && ka.some((k) => kb.includes(k))) return true;
+	if (isFileMetaLike(ua) || isFileMetaLike(ub)) {
+		if (isFileMetaLike(ua) && isFileMetaLike(ub)) return ua.path === ub.path;
+		return false;
 	}
 	return String(ua ?? "") === String(ub ?? "");
 }

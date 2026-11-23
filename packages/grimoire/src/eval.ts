@@ -33,7 +33,7 @@ import {
 } from "./dates";
 import { fnConv, fnInRange, fnInRangeTernary } from "./units";
 import { getFileField, resolveIdent } from "./context";
-import { listNotesFrom, readCrossMember, resolveNoteContext } from "./crossNote";
+import { linkpathFromValue, listNotesFrom, readCrossMember, resolveNoteContext } from "./crossNote";
 import { parseExpression, parseQuery } from "./parse";
 import type { AstNode, FileMeta, QueryContext, Value } from "./types";
 
@@ -342,6 +342,152 @@ function evalWhereItem(node: AstNode, candidate: QueryContext, source: QueryCont
 	return negated ? !truth : truth;
 }
 
+function isUniqueFlag(node: AstNode): boolean {
+	return node.kind === "ident" && node.name.toLowerCase() === "unique";
+}
+
+/**
+ * Where-brace predicates for `filter`. Reuses pair/tuple brace AST:
+ * `{pred}` → pair(pred, "") (singleton sugar); `{a, b}` → pair; `{a,b,c}` → tuple.
+ * Empty-string false arm from singleton sugar is skipped.
+ */
+function extractFilterWherePreds(node: AstNode): AstNode[] {
+	if (node.kind === "pair") {
+		const preds: AstNode[] = [node.key];
+		if (!(node.value.kind === "literal" && node.value.value === "")) {
+			preds.push(node.value);
+		}
+		return preds;
+	}
+	if (node.kind === "tuple") return [...node.elements];
+	return [node];
+}
+
+/** null → []; non-list → [x]; list-of-lists → flatten one level. */
+function normalizeFilterList(list: Value): Value[] {
+	const inner = unwrapForTruthiness(list);
+	if (inner === null || inner === undefined) return [];
+	if (!Array.isArray(inner)) return [inner];
+	const hasNested = inner.some((el) => Array.isArray(unwrapForTruthiness(el)));
+	if (!hasNested) return inner;
+	const out: Value[] = [];
+	for (const el of inner) {
+		const u = unwrapForTruthiness(el);
+		if (Array.isArray(u)) out.push(...u);
+		else out.push(el);
+	}
+	return out;
+}
+
+function stableUnique(items: Value[]): Value[] {
+	const out: Value[] = [];
+	for (const item of items) {
+		if (!out.some((kept) => valuesEqual(kept, item))) out.push(item);
+	}
+	return out;
+}
+
+function tryResolveListItemNote(item: Value, source: QueryContext): QueryContext | null {
+	const linkpath =
+		linkpathFromValue(item) ??
+		(typeof unwrapForTruthiness(item) === "string"
+			? (() => {
+					const s = String(unwrapForTruthiness(item)).trim();
+					const wiki = /^\[\[([^\]|#]+)(?:\|[^\]]*)?\]\]$/.exec(s);
+					return wiki ? wiki[1]!.trim() : null;
+				})()
+			: null);
+	if (!linkpath) return null;
+	return resolveNoteContext(source, linkpath);
+}
+
+function itemMatchesSourceFile(item: Value, source: QueryContext): boolean {
+	const note = tryResolveListItemNote(item, source);
+	if (note) return note.file.path === source.file.path;
+	return valuesEqual(item, source.file as unknown as Value);
+}
+
+function filterItemContext(item: Value, source: QueryContext): QueryContext {
+	const noteCtx = tryResolveListItemNote(item, source);
+	if (noteCtx) {
+		return {
+			...noteCtx,
+			fields: { ...noteCtx.fields, item },
+			sourceCtx: source,
+			deps: source.deps,
+			app: source.app,
+			resolveNote: source.resolveNote,
+			listNotes: source.listNotes,
+		};
+	}
+	return {
+		...source,
+		fields: { ...source.fields, item },
+		sourceCtx: source,
+	};
+}
+
+/** Filter where-brace predicate against a list item (not necessarily a page ctx). */
+function evalFilterWhereItem(node: AstNode, item: Value, source: QueryContext): boolean {
+	let negated = false;
+	let body = node;
+	if (body.kind === "unary" && (body.op === "!" || body.op === "not")) {
+		negated = true;
+		body = body.arg;
+	}
+
+	if (isThisFileRef(body)) {
+		const match = itemMatchesSourceFile(item, source);
+		return negated ? !match : match;
+	}
+
+	// Note-shaped items: bare idents = that page; `this.` = source; `item` = element.
+	const scoped = filterItemContext(item, source);
+	const truth = isTruthy(evalNode(body, scoped));
+	return negated ? !truth : truth;
+}
+
+/**
+ * `filter(LIST, unique?)` / `filter(LIST, {preds…})` / either order of unique + where.
+ * Predicates AND; `!` negates; `this.` = source note; `item` = current element.
+ * Dedupe is applied last when `unique` is present.
+ */
+function evalFilter(args: AstNode[], ctx: QueryContext): Value {
+	if (args.length < 1 || args.length > 3) {
+		throw new Error(
+			'filter() expects filter(LIST, unique), filter(LIST, {preds…}), or both (either order)',
+		);
+	}
+
+	let unique = false;
+	let whereNode: AstNode | null = null;
+	for (let i = 1; i < args.length; i++) {
+		const arg = args[i]!;
+		if (isUniqueFlag(arg)) {
+			unique = true;
+			continue;
+		}
+		if (arg.kind === "pair" || arg.kind === "tuple") {
+			if (whereNode) {
+				throw new Error("filter() accepts at most one where-brace group");
+			}
+			whereNode = arg;
+			continue;
+		}
+		throw new Error(
+			'filter() optional args must be `unique` and/or a where brace `{preds…}`',
+		);
+	}
+
+	let items = normalizeFilterList(evalNode(args[0]!, ctx));
+	if (whereNode) {
+		const preds = extractFilterWherePreds(whereNode);
+		items = items.filter((item) => preds.every((p) => evalFilterWhereItem(p, item, ctx)));
+	}
+	if (unique) items = stableUnique(items);
+	return items;
+}
+
 function evalAtQuery(
 	node: Extract<AstNode, { kind: "atQuery" }>,
 	source: QueryContext,
@@ -574,6 +720,7 @@ function evalNode(node: AstNode, ctx: QueryContext): Value {
 			if (name === "any") return evalAny(node.args, ctx);
 			if (name === "contains") return evalContainsLike(node.args, ctx, fnContains, "contains");
 			if (name === "econtains") return evalContainsLike(node.args, ctx, fnEcontains, "econtains");
+			if (name === "filter") return evalFilter(node.args, ctx);
 			const args = node.args.map((arg) => evalNode(arg, ctx));
 			const fn = FUNCTION_MAP[name];
 			if (!fn) throw new Error(`Unknown function "${node.callee}"`);
@@ -588,7 +735,7 @@ type Fn = (args: Value[], rawArgs?: AstNode[]) => Value;
 
 const FUNCTION_MAP: Record<string, Fn> = {
 	default: ([a, b]) => fnDefault(a, b),
-	// choice / any / exists / contains / econtains / inRange: raw-AST dispatch above
+	// choice / any / exists / contains / econtains / inRange / filter: raw-AST dispatch above
 	slice: ([list, start, end]) => fnSlice(list, start, end),
 	dateformat: ([d, fmt]) => dateformat(d, String(fmt ?? "")),
 	durationformat: ([d, fmt]) => durationformat(d, fmt === undefined ? undefined : String(fmt)),

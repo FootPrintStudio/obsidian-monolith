@@ -1,4 +1,4 @@
-# Property Query Language (PQL) — Specification v0.10
+# Property Query Language (PQL) — Specification v0.11
 
 Grimoire evaluates inline PQL expressions in Obsidian **Reading view** using the `q=` prefix (configurable).
 
@@ -126,6 +126,7 @@ Duration literals: `dur(1, "day")`, `dur(3, "months")`, `dur("1 day 2 hours")`.
 | `replace(hay, needle, replacement)` | Replace all literal occurrences of `needle` (not regex); empty needle → hay unchanged |
 | `round(n)` / `round(n, digits)` | Round number; optional non-negative decimal places; non-numeric → null |
 | `abs(n)` | Absolute value; non-numeric → null |
+| `filter(LIST, unique?)` / `filter(LIST, {preds…})` | List filter. `unique` = stable dedupe (first wins). Where brace predicates **AND**; `!` negates; `this.` = source note; `item` = current element; wiki/`this.file` by path identity. `unique` may precede or follow the where brace — **dedupe last**. `null` → `[]`; non-list → single-element; list-of-lists → flatten **one** level. Where braces reuse pair/tuple AST (`{pred}` singleton sugar skips empty false arm). |
 
 ## `select()` syntax
 
@@ -144,9 +145,10 @@ Duration literals: `dur(1, "day")`, `dur(3, "months")`, `dur("1 day 2 hours")`.
 |------|-----|---------|
 | `{value}` | pair with false arm `""` | Binary true-only branches (`choice` / `any` / `exists` / `contains` / `econtains`) |
 | `{key, value}` / `{ifTrue, ifFalse}` | pair | `select(...)` arms; binary branch arms |
-| `{a, b, c}` (3+ exprs) | tuple | `inRange({value, low, high}, {below, in, above})` only |
+| `{a, b, c}` (3+ exprs) | tuple | `inRange({value, low, high}, {below, in, above})`; `filter` where predicates |
+| `{pred}` / `{a, b}` in `filter` | pair (singleton → false arm `""` skipped) | `filter` where AND-predicates |
 
-Order is positional. There is no `{name: expr}` map syntax. Binary branch braces: `{Value}` ≡ `{Value, ""}`. `inRange` stays three-way (no singleton shorthand).
+Order is positional. There is no `{name: expr}` map syntax. Binary branch braces: `{Value}` ≡ `{Value, ""}`. `inRange` stays three-way (no singleton shorthand). `filter` where braces treat pair/tuple elements as AND predicates (not branch arms).
 
 ## Query grammar
 

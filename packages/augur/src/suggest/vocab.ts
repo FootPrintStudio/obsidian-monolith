@@ -47,6 +47,21 @@ export const GRIMOIRE_FUNCTIONS = [
 	{ label: "replace()", insert: "replace()", detail: "hay, needle, replacement" },
 	{ label: "round()", insert: "round()", detail: "n, digits?" },
 	{ label: "abs()", insert: "abs()", detail: "n" },
+	{
+		label: "filter(LIST, unique)",
+		insert: "filter(LIST, unique)",
+		detail: "Stable dedupe (first wins)",
+	},
+	{
+		label: "filter(LIST, {!this.file})",
+		insert: "filter(LIST, {!this.file})",
+		detail: "Where brace — exclude source note",
+	},
+	{
+		label: "filter(LIST, unique, {!this.file})",
+		insert: "filter(LIST, unique, {!this.file})",
+		detail: "Dedupe last + where predicates AND",
+	},
 ] as const;
 
 /** Cross-note wiki / link-pass / `@` snippets (Grimoire 0.9.7+ / 0.9.8+). */
