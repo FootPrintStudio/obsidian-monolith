@@ -453,7 +453,7 @@ function evalFilterWhereItem(node: AstNode, item: Value, source: QueryContext): 
  * Dedupe is applied last when `unique` is present.
  */
 function evalFilter(args: AstNode[], ctx: QueryContext): Value {
-	if (args.length < 1 || args.length > 3) {
+	if (args.length < 2 || args.length > 3) {
 		throw new Error(
 			'filter() expects filter(LIST, unique), filter(LIST, {preds…}), or both (either order)',
 		);
@@ -478,11 +478,21 @@ function evalFilter(args: AstNode[], ctx: QueryContext): Value {
 			'filter() optional args must be `unique` and/or a where brace `{preds…}`',
 		);
 	}
+	if (!unique && !whereNode) {
+		throw new Error(
+			'filter() expects filter(LIST, unique), filter(LIST, {preds…}), or both (either order)',
+		);
+	}
 
+	// List eval uses ambient ctx; where `this.` / !this.file use authoring source
+	// (same lock as `@` map — sourceCtx when nested).
+	const authoring = ctx.sourceCtx ?? ctx;
 	let items = normalizeFilterList(evalNode(args[0]!, ctx));
 	if (whereNode) {
 		const preds = extractFilterWherePreds(whereNode);
-		items = items.filter((item) => preds.every((p) => evalFilterWhereItem(p, item, ctx)));
+		items = items.filter((item) =>
+			preds.every((p) => evalFilterWhereItem(p, item, authoring)),
+		);
 	}
 	if (unique) items = stableUnique(items);
 	return items;
