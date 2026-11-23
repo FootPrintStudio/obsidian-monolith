@@ -1,19 +1,25 @@
+/* Primary: oracle-*; dual navinote-* kept temporarily for vault CSS snippets. */
+.oracle-panel,
 .navinote-panel {
 	padding: 10px;
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
+.oracle-row,
 .navinote-row {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 }
 
+.oracle-left,
+.oracle-right,
 .navinote-left,
 .navinote-right {
 	flex: 1;
 }
 
+.oracle-center,
 .navinote-center {
 	flex: 2;
 	display: flex;
@@ -21,17 +27,20 @@
 	gap: 10px;
 }
 
+.oracle-right,
 .navinote-right {
 	display: flex;
 	justify-content: flex-end;
 	gap: 10px;
 }
 
+.oracle-left,
 .navinote-left {
 	display: flex;
 	gap: 10px;
 }
 
+.oracle-panel button,
 .navinote-panel button {
 	padding: 5px 10px;
 	background-color: var(--interactive-normal);
@@ -41,10 +50,12 @@
 	cursor: pointer;
 }
 
+.oracle-panel button:hover,
 .navinote-panel button:hover {
 	background-color: var(--interactive-hover);
 }
 
+.oracle-modal-footer,
 .navinote-modal-footer {
 	display: flex;
 	justify-content: flex-end;

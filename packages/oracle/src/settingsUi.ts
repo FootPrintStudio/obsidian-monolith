@@ -30,7 +30,7 @@ class TextPromptModal extends Modal {
 		});
 		input.style.width = "100%";
 
-		const footer = this.contentEl.createDiv({ cls: "navinote-modal-footer" });
+		const footer = this.contentEl.createDiv({ cls: "oracle-modal-footer" });
 		footer.createEl("button", { text: "Cancel" }).addEventListener("click", () => {
 			this.close();
 			this.onSubmit(null);
