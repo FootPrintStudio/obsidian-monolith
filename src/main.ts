@@ -57,6 +57,7 @@ export default class MonolithPlugin extends Plugin {
 		this.oracle?.onunload();
 		this.beacon?.onunload();
 		this.grimoire?.onunload();
+		this.visage?.onunload();
 		this.epochs = null;
 		this.grimoire = null;
 		this.visage = null;

@@ -1,5 +1,6 @@
 import { Notice, Platform, Plugin } from "obsidian";
 import { launchEntry } from "./launch";
+import { ShellConfirmModal } from "./shellConfirm";
 import {
 	DEFAULT_SETTINGS,
 	type DesktopLauncherEntry,
@@ -76,8 +77,8 @@ export class BeaconModule {
 	}
 
 	async onload(): Promise<void> {
+		// Desktop-only: quiet no-op on mobile (spine beacon defaults on).
 		if (!Platform.isDesktop) {
-			new Notice("Beacon requires the desktop app.");
 			return;
 		}
 
@@ -203,6 +204,27 @@ export class BeaconModule {
 	}
 
 	async runLaunch(entry: LauncherEntry): Promise<void> {
+		if (!Platform.isDesktop) {
+			return;
+		}
+
+		if (entry.kind === "shell") {
+			const confirmed = await new Promise<boolean>((resolve) => {
+				new ShellConfirmModal(
+					this.app,
+					entry.name,
+					entry.command,
+					() => resolve(true),
+					() => resolve(false),
+				).open();
+			});
+			if (!confirmed) return;
+		}
+
+		await this.executeLaunch(entry);
+	}
+
+	private async executeLaunch(entry: LauncherEntry): Promise<void> {
 		try {
 			await launchEntry(entry);
 			new Notice(`Launched: ${entry.name}`);

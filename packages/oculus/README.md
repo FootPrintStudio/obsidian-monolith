@@ -76,7 +76,8 @@ Open **Settings → Community plugins → Oculus** (Settings | README | Guide).
 
 | Setting | Description |
 |---------|-------------|
-| Allow remote media | Enable `URL:` entries |
+| Allow remote media | Enable `URL:` entries (**off** by default) |
+| Remote media host allowlist | Optional hostnames (`cdn.example.com`, `*.github.io`); empty = any host when remote is on |
 | Validate remote Content-Type | Probe headers when the extension is missing |
 | Remote request timeout | Milliseconds for Content-Type probes |
 | Use Media Extended for videos | Local and direct URL videos in Media Extended (desktop) |
@@ -84,7 +85,7 @@ Open **Settings → Community plugins → Oculus** (Settings | README | Guide).
 | Lightbox note images | Wiki embeds and markdown images open the Oculus lightbox |
 | Default view | Used when VIEW is omitted |
 | Default filter | Used when FILTER is omitted (`all` by default) |
-| CollectionXiewer API URL | Base URL for `XIEWER:` (default `http://127.0.0.1:47821`; override wins over token-file host/port; changing it clears cached Xiewer blob URLs) |
+| CollectionXiewer API URL | Base URL for `XIEWER:` (default `http://127.0.0.1:47821`; private/loopback only — public hosts refused so the local token stays on-machine) |
 
 ## Develop / rebuild
 

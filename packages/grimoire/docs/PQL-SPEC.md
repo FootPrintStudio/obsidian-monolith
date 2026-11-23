@@ -193,6 +193,8 @@ Hyphenated styles (`cards-code`) are a single style token.
 | Fragments (plain + styled concat) | Inline mix of markdown/HTML/text and styled chips |
 | Error | red inline `pq-error` |
 
+**Trust:** vault-authored HTML and `AS button` `cmd:…` targets are executed without sandboxing (sole-user / trusted-vault model). Beacon shell launches confirm; Grimoire `cmd:` does not. See GUIDE → Trust model.
+
 ## Date formatting tokens
 
 PQL accepts **Luxon-style aliases** (Dataview habit) and maps them to Obsidian moment:

@@ -30,7 +30,9 @@ export function renderEpochsSettings(containerEl: HTMLElement, ctx: EpochsSettin
 
 	new Setting(containerEl)
 		.setName("Calendars folder")
-		.setDesc("Vault folder for calendar notes. Changing this does not move existing notes.")
+		.setDesc(
+			"Vault folder for calendar notes. Changing this does not move existing notes; the calendar index rebuilds automatically.",
+		)
 		.addText((text) =>
 			text
 				.setPlaceholder(DEFAULT_SETTINGS.calendarsFolder)

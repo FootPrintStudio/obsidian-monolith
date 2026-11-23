@@ -13,6 +13,8 @@ describe("normalizeSettings", () => {
 		expect(s.modules.lexicon).toBe(false);
 		expect(s.modules.oracle).toBe(false);
 		expect(s.oculus.collectionXiewerBaseUrl).toContain("127.0.0.1");
+		expect(s.oculus.allowRemoteImages).toBe(false);
+		expect(s.oculus.remoteMediaHostAllowlist).toBe("");
 		expect(s.grimoire.inlinePrefix).toBe(DEFAULT_SETTINGS.grimoire.inlinePrefix);
 	});
 

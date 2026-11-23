@@ -20,6 +20,10 @@ test("rejects public hosts", () => {
 	assert.equal(isPrivateOrLoopbackBaseUrl("http://8.8.8.8:47821"), false);
 });
 
+test("accepts loopback file URLs (path ignored)", () => {
+	assert.equal(isPrivateOrLoopbackBaseUrl("http://127.0.0.1:47821/file/12"), true);
+});
+
 test("rejects garbage", () => {
 	assert.equal(isPrivateOrLoopbackBaseUrl("not-a-url"), false);
 	assert.equal(isPrivateOrLoopbackBaseUrl(""), false);

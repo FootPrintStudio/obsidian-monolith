@@ -2,6 +2,7 @@ import { readFileSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
 import type { MediaFilter, MediaKind } from "./types";
+import { isPrivateOrLoopbackBaseUrl } from "./xiewerBaseUrl";
 
 export interface XiewerSearchItem {
 	id: number;
@@ -102,8 +103,15 @@ export function readLocalApiSession(preferredBaseUrl?: string): LocalApiSession 
 			typeof parsed.host === "string" && Number.isFinite(parsed.port)
 				? `http://${parsed.host}:${parsed.port}`
 				: "";
-		// Settings override wins over host/port in local-api.json (Carl may point at a non-default bind).
-		const baseUrl = preferred || fromFile || DEFAULT_BASE_URL;
+		// Settings override wins only when loopback/private (never send token off-machine).
+		let baseUrl = DEFAULT_BASE_URL;
+		if (preferred && isPrivateOrLoopbackBaseUrl(preferred)) {
+			baseUrl = preferred;
+		} else if (fromFile && isPrivateOrLoopbackBaseUrl(fromFile)) {
+			baseUrl = fromFile;
+		} else if (fromFile) {
+			baseUrl = fromFile; // unusual; resolveSearchRoot still refuses public roots
+		}
 		const tokenHeader =
 			typeof parsed.tokenHeader === "string" && parsed.tokenHeader.trim()
 				? parsed.tokenHeader.trim()
@@ -141,9 +149,25 @@ export function xiewerMediaKind(kind: string): MediaKind {
 	return mapKind(kind) ?? "image";
 }
 
-function resolveSearchRoot(preferredBaseUrl: string, session: LocalApiSession): string {
-	const preferred = preferredBaseUrl.trim();
-	return preferred ? normalizeBaseUrl(preferred) : session.baseUrl;
+/**
+ * Prefer settings override when private/loopback; otherwise fall back to session
+ * (from local-api.json). Never return a public host — token must stay on-machine.
+ */
+function resolveSearchRoot(
+	preferredBaseUrl: string,
+	session: LocalApiSession,
+): { root: string } | { error: string } {
+	const preferred = preferredBaseUrl.trim() ? normalizeBaseUrl(preferredBaseUrl) : "";
+	const candidates = [preferred, session.baseUrl, DEFAULT_BASE_URL].filter(Boolean);
+	for (const candidate of candidates) {
+		if (isPrivateOrLoopbackBaseUrl(candidate)) {
+			return { root: normalizeBaseUrl(candidate) };
+		}
+	}
+	return {
+		error:
+			"CollectionXiewer base URL is not loopback/private. Refusing to send the local API token off-machine. Set Settings → Oculus → CollectionXiewer API URL to http://127.0.0.1:47821 (or a LAN private address).",
+	};
 }
 
 async function searchOnce(
@@ -202,7 +226,11 @@ export async function fetchXiewerSearch(
 		};
 	}
 
-	const root = resolveSearchRoot(preferredBaseUrl, session);
+	const resolved = resolveSearchRoot(preferredBaseUrl, session);
+	if ("error" in resolved) {
+		return { items: [], error: resolved.error };
+	}
+	const root = resolved.root;
 	const capped = limit ?? DEFAULT_XIEWER_LIMIT;
 	const controller = new AbortController();
 	const timer = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -227,8 +255,17 @@ export async function fetchXiewerSearch(
 		}
 
 		noteXiewerSessionToken(refreshed.token);
-		const retryRoot = resolveSearchRoot(preferredBaseUrl, refreshed);
-		const second = await searchOnce(retryRoot, refreshed, query, capped, controller.signal);
+		const retryResolved = resolveSearchRoot(preferredBaseUrl, refreshed);
+		if ("error" in retryResolved) {
+			return { items: [], error: retryResolved.error };
+		}
+		const second = await searchOnce(
+			retryResolved.root,
+			refreshed,
+			query,
+			capped,
+			controller.signal,
+		);
 		if ("error" in second) {
 			return { items: [], error: second.error };
 		}
@@ -256,6 +293,12 @@ export async function resolveXiewerObjectUrl(
 	token: string,
 	tokenHeader = DEFAULT_TOKEN_HEADER,
 ): Promise<string> {
+	if (!isPrivateOrLoopbackBaseUrl(fileUrl)) {
+		throw new Error(
+			"CollectionXiewer file URL is not loopback/private. Refusing to send the local API token off-machine.",
+		);
+	}
+
 	const tryFetch = async (activeToken: string, activeHeader: string): Promise<string> => {
 		const cacheKey = objectUrlCacheKey(activeHeader, activeToken, fileUrl);
 		const cached = objectUrlCache.get(cacheKey);

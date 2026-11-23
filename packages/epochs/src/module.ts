@@ -76,9 +76,14 @@ export class EpochsModule {
 	}
 
 	applySettings(next: EpochsSettings): void {
+		const prevFolder = this.settings.calendarsFolder;
 		this.settings = { ...DEFAULT_SETTINGS, ...next };
 		if (!this.settings.calendarsFolder?.trim()) {
 			this.settings.calendarsFolder = DEFAULT_SETTINGS.calendarsFolder;
+		}
+		// Folder change leaves stale index until rebuild (settings UI also calls rebuildIndex).
+		if (prevFolder !== this.settings.calendarsFolder) {
+			void this.rebuildIndex();
 		}
 	}
 }

@@ -263,7 +263,7 @@ export class BeaconLauncherPanel {
 
 	render(containerEl: HTMLElement): void {
 		containerEl.createEl("p", {
-			text: "Each enabled entry becomes an Obsidian command. In notes, use Grimoire AS button with a cmd: target (no Buttons plugin). Copy the snippet from each row.",
+			text: "Desktop only (Linux). On mobile Beacon stays quiet and registers nothing. Each enabled entry becomes an Obsidian command. In notes, use Grimoire AS button with a cmd: target (no Buttons plugin). Custom shell launches ask for confirm first.",
 		});
 
 		this.renderCollectionXiewerSeedCallout(containerEl);
