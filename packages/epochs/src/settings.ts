@@ -1,6 +1,4 @@
-import { App, Component, PluginSettingTab, Setting } from "obsidian";
-import { createCalendarNote } from "./createCalendar";
-import { CreateCalendarModal } from "./createModal";
+import { App, Component, PluginSettingTab } from "obsidian";
 import type EpochsPlugin from "./main";
 import {
 	renderGuidePanel,
@@ -8,7 +6,7 @@ import {
 	renderSettingsTabBar,
 	type PluginSettingsTabId,
 } from "./readmeTab";
-import { DEFAULT_SETTINGS } from "./types";
+import { renderEpochsSettings } from "./settingsUi";
 
 export class EpochsSettingTab extends PluginSettingTab {
 	plugin: EpochsPlugin;
@@ -53,74 +51,17 @@ export class EpochsSettingTab extends PluginSettingTab {
 			return;
 		}
 
-		this.displaySettings(content);
-	}
-
-	private displaySettings(containerEl: HTMLElement): void {
-		containerEl.createEl("p", {
-			text: "Define fictional calendars as notes, then format them with Grimoire date functions.",
+		renderEpochsSettings(content, {
+			app: this.app,
+			settings: this.plugin.settings,
+			persist: async () => {
+				await this.plugin.saveSettings();
+			},
+			rebuildIndex: async () => {
+				await this.plugin.rebuildIndex();
+			},
+			listCalendars: () => this.plugin.api.listCalendars(),
+			redisplay: () => this.display(),
 		});
-
-		new Setting(containerEl)
-			.setName("Calendars folder")
-			.setDesc(
-				"Vault folder for calendar notes. Changing this does not move existing notes.",
-			)
-			.addText((text) =>
-				text
-					.setPlaceholder(DEFAULT_SETTINGS.calendarsFolder)
-					.setValue(this.plugin.settings.calendarsFolder)
-					.onChange(async (value) => {
-						this.plugin.settings.calendarsFolder =
-							value.trim() || DEFAULT_SETTINGS.calendarsFolder;
-						await this.plugin.saveSettings();
-						await this.plugin.rebuildIndex();
-					}),
-			);
-
-		new Setting(containerEl)
-			.setName("Default calendar id")
-			.setDesc("Optional. Reserved for future ambiguous parses.")
-			.addText((text) =>
-				text.setValue(this.plugin.settings.defaultCalendarId).onChange(async (value) => {
-					this.plugin.settings.defaultCalendarId = value.trim();
-					await this.plugin.saveSettings();
-				}),
-			);
-
-		new Setting(containerEl)
-			.setName("Create calendar")
-			.setDesc(
-				"Creates a new note in the calendars folder with every field prefilled.",
-			)
-			.addButton((btn) =>
-				btn.setButtonText("Create…").setCta().onClick(() => {
-					new CreateCalendarModal(this.app, async (name) => {
-						const file = await createCalendarNote(
-							this.app,
-							this.plugin.settings.calendarsFolder,
-							name,
-						);
-						if (file) {
-							await this.plugin.rebuildIndex();
-							await this.app.workspace.getLeaf(true).openFile(file);
-						}
-					}).open();
-				}),
-			);
-
-		const listed = this.plugin.api.listCalendars();
-		containerEl.createEl("h3", { text: "Loaded calendars" });
-		if (listed.length === 0) {
-			containerEl.createEl("p", {
-				text: "None yet — create a calendar or add notes with epochs: calendar in the folder.",
-			});
-		} else {
-			for (const cal of listed) {
-				containerEl.createEl("p", {
-					text: `${cal.name} (id: ${cal.id}) — ${cal.path}`,
-				});
-			}
-		}
 	}
 }

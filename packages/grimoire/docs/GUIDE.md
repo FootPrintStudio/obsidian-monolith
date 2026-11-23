@@ -81,7 +81,7 @@ If you have a frontmatter field literally named `file`, use it as a bare identif
 
 | Op | Meaning | Notes |
 |----|---------|-------|
-| `+` | Add / concat | String if either side is a string |
+| `+` | Add / concat | Numbers/dates/durations per rules below; if either side is a **list** or styled/`AS` fragment (incl. `@` / `filter` results), keeps list items and chips as rich fragments — does **not** stringify. Plain string+string still concatenates. |
 | `-` | Subtract | Numbers; dates/durations per table below |
 | `*` | Multiply | Numbers; duration × number scales duration |
 | `/` | Divide | Numbers; duration ÷ number scales duration |
