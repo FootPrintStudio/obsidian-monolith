@@ -1,6 +1,6 @@
 # Grimoire — Language Guide
 
-Complete reference for **Property Query Language (PQL)** as implemented in Grimoire v0.9.11. Cross-note wiki / `@` queries and Decision B (Grimoire **or** Dataview for Carl) are in scope.
+Complete reference for **Property Query Language (PQL)** as implemented in Grimoire **1.0** (PQL-SPEC v1.0). Cross-note wiki / `@` queries and Decision B (Grimoire **or** Dataview for Carl) are in scope. Breaking vs 0.9.x: flattened `@`, no packed `contains({hay,needle},…)`, no brace-less `choice(cond,a,b)`.
 
 Expressions live in inline code with the **`q=`** prefix (configurable under Settings):
 
@@ -22,7 +22,7 @@ Open notes in **Reading view** to see results when **Enable in Reading view** is
 | Prefix | `q=` at the start of inline code (default) |
 | Body | Single PQL expression |
 | Style | Optional `AS <style>` postfix on any subexpression |
-| Scope | Always the **current note** being rendered |
+| Scope | **Current note** by default; cross-note via `[[…]]`, link auto-pass, `@`, `filter` |
 | Whitespace | Ignored outside quoted strings |
 
 ---
@@ -155,23 +155,24 @@ Missing targets / fields → empty. With **Refresh on metadata change** enabled,
 ### Multi-note `@` queries
 
 ```markdown
-`q= @({from("Employees/Management")})`
-`q= @({from("Employees/Management")}, {contains(workStatus, "retired"), any(emailAddress)})`
-`q= @({from("Employees/Management")}, {!this.file, !contains(workStatus, "Fired")})`
-`q= @({from("*")}, {exists(title)}, {this.file.name + " → " + title})`
+`q= @(from("Employees/Management"))`
+`q= @(from("Employees/Management"), {contains(workStatus, "retired"), any(emailAddress)})`
+`q= @(from("Employees/Management"), {!this.file, !contains(workStatus, "Fired")})`
+`q= @(from("*"), {exists(title)}, this.file.name + " → " + title)`
 ```
 
-| Brace | Role |
-|-------|------|
-| 1st `{from("path")}` | Required. Quoted folder path, or `from("*")` for vault-wide |
-| 2nd `{where…}` | Optional. Bool predicates ANDed; `!` negates; `!this.file` excludes the source note |
-| 3rd `{map}` | Optional. Per-page expression; bare idents = page fields; `this.…` = **source** note |
+| Argument | Role |
+|----------|------|
+| `from("path")` | Required first arg. Quoted folder path, or `from("*")` for vault-wide |
+| `{where…}` | Optional. Brace = predicate list (AND); `!` negates; `!this.file` excludes the source note |
+| `map` | Optional expression (not brace-wrapped). Bare idents = page fields; `this.…` = **source** note |
 
-Result is a **list** (join with `join` / index with `[0]`). Map expressions may use **`AS` styles** (chips render per page):
+**Disambiguation:** 2nd arg is a brace → where; otherwise → map. Third arg is always map.
 
 ```markdown
-`q= @({from("Characters")}, {any(status)}, {(status AS pill)})`
-`q= @({from("Characters")}, {exists(title)}, {title AS card})`
+`q= @(from("Folder"), title)`
+`q= @(from("Characters"), {any(status)}, (status AS pill))`
+`q= @(from("Characters"), {exists(title)}, title AS card)`
 ```
 
 Prefer folder-scoped `from("…")` inside Visage cards. Hard cap **250** pages — over-cap returns empty.
@@ -196,7 +197,7 @@ Inside the where brace: bare idents on wiki/page handles use that page’s field
 `q= filter(tags, unique)`
 `q= filter(cast, {!this.file})`
 `q= filter(cast, unique, {!this.file})`
-`q= filter(@({from("Movies")}, {contains(actors, this.file)}, {actors}), unique, {!this.file})`
+`q= filter(@(from("Movies"), {contains(actors, this.file)}, actors), unique, {!this.file})`
 ```
 
 ### Grouping
@@ -220,18 +221,12 @@ Empty string, `null`, and empty lists `[]` are treated as missing.
 
 ### `choice(condition, {ifTrue, ifFalse})`
 
-Boolean branch — like an if/else. **Primary** form uses a brace branch group. **`{Value}`** means true-only (≡ `{Value, ""}`).
+Boolean branch — like an if/else. Brace branch group required. **`{Value}`** means true-only (≡ `{Value, ""}`).
 
 ```markdown
 `q= choice(any(tags), {tags, "no tags"})`
 `q= choice(numA == 10, {"ten", "not ten"})`
 `q= choice(any(parent), {"**Parent:** " + parent})`
-```
-
-#### Legacy three-arg form
-
-```markdown
-`q= choice(any(tags), tags, "no tags")`
 ```
 
 ### `select(key, {k1, v1}, {k2, v2}, …)`
@@ -251,7 +246,7 @@ Key-based lookup — like a switch. First argument is the value to match; remain
 
 **With a trailing branch brace:** returns the matching arm (self-branching). **`{Value}`** ≡ `{Value, ""}`.
 
-**Without a branch brace (legacy boolean):**
+**Without a branch brace (boolean predicate):**
 
 - **One argument:** `true` when the value exists and is non-empty (string or list).
 - **Two or more arguments:** first argument is the property; remaining arguments are candidates. Returns `true` if **any** candidate is contained in the property (exact element match for lists; substring match for strings).
@@ -287,28 +282,24 @@ Returns a sub-list. `end` is optional (defaults to list length).
 
 ```markdown
 `q= slice(epochTitles, 0, 1)`
-`q= econtains({slice(epochTitles, 1, 2), ""}, {None, slice(epochTitles, 1, 2)})`
+`q= econtains(slice(epochTitles, 1, 2), "", {None, slice(epochTitles, 1, 2)})`
 ```
 
-### `contains({haystack, needle}, {ifTrue, ifFalse})`
+### `contains(haystack, needle, {ifTrue, ifFalse}?)`
 
-**Primary:** two brace groups — subject pair + binary branch. **`{Value}`** true-only still applies to the branch brace.
-
-Legacy boolean: `contains(haystack, needle)`. Also accepts `contains(hay, needle, {ifTrue, ifFalse})`.
-
-Substring match for strings; partial match for list elements.
+Boolean substring match for strings; partial match for list elements. Optional trailing branch brace (`{Value}` true-only OK).
 
 ```markdown
-`q= contains({title, "ell"}, {"yes", "no"})`
 `q= contains(title, "ell")`
+`q= contains(title, "ell", {"yes", "no"})`
 ```
 
-### `econtains({haystack, needle}, {ifTrue, ifFalse})`
+### `econtains(haystack, needle, {ifTrue, ifFalse}?)`
 
-Exact element match in lists; exact key check for objects. Same primary / legacy shapes as `contains`.
+Exact element match in lists; exact key check for objects. Same shapes as `contains`.
 
 ```markdown
-`q= econtains({slice(epochTitles, 0, 1), ""}, {None, slice(epochTitles, 0, 1)})`
+`q= econtains(slice(epochTitles, 0, 1), "", {None, slice(epochTitles, 0, 1)})`
 `q= econtains(tags, "a")`
 ```
 
@@ -377,7 +368,7 @@ Unit names are case-insensitive (`cm`, `CM`, `centimeters`).
 
 ### `inRange({value, low, high}, {below, inBand, above})`
 
-**Primary form (three-way).** Inclusive bounds (`low <= value <= high`). Picks one of three results:
+**Three-way display form.** Inclusive bounds (`low <= value <= high`). Picks one of three results:
 
 | Condition | Result |
 |-----------|--------|
@@ -398,16 +389,16 @@ Comparable operand kinds (all three must match): **number**, **date** (Gregorian
 
 `age(...)` returns a **number**, so age bands use the numeric path (not date/duration).
 
-#### Legacy boolean form
+#### Boolean predicate form
 
-`inRange(value, low, high)` still returns **`true`/`false`** for use with `choice` (same comparable types). Prefer the ternary form for new notes.
+`inRange(value, low, high)` returns **`true`/`false`** for where braces / `choice` (same comparable types).
 
 ```markdown
-`q= choice(inRange(height, 150, 190), "OK", "Out of range")`
-`q= choice(inRange(date(birthDate), date("2000-01-01"), date("2010-12-31")), "in window", "out")`
+`q= choice(inRange(height, 150, 190), {"OK", "Out of range"})`
+`q= choice(inRange(date(birthDate), date("2000-01-01"), date("2010-12-31")), {"in window", "out"})`
 ```
 
-**Migration:** replace `choice(inRange(v, lo, hi), in, out)` with `inRange({v, lo, hi}, {outBelow, in, outAbove})` when you need separate below/above labels (or use the same string for both out-of-range branches).
+Use the three-way form when below and above need different labels.
 
 ### `dur(amount, unit)` / `dur("text")`
 
@@ -608,7 +599,7 @@ Without `AS`, output uses the default markdown / HTML / plain pipeline above.
 
 Both plugins can stay enabled at the same time.
 
-Grimoire registers its Reading view processor **before** Dataview and automatically shields inline code that is only `=`, `==`, etc. — patterns Dataview mis-parses as inline queries. Expressions like `` `q= choice(numA == 10, "yes", "no")` `` are unaffected; only standalone `` `==` `` documentation snippets are shielded.
+Grimoire registers its Reading view processor **before** Dataview and automatically shields inline code that is only `=`, `==`, etc. — patterns Dataview mis-parses as inline queries. Expressions like `` `q= choice(numA == 10, {"yes", "no"})` `` are unaffected; only standalone `` `==` `` documentation snippets are shielded.
 
 Valid Dataview inline queries (`` `= this.file.name` ``, `` `$= ...` ``) are left alone.
 

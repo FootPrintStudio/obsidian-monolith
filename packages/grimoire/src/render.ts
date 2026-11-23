@@ -180,7 +180,7 @@ function renderQueryResult(
 		return;
 	}
 
-	// `@({…}, {…}, {(status AS pill)})` → list of styled values; keep chips, don't stringify.
+	// `@(…, …, (status AS pill))` → list of styled values; keep chips, don't stringify.
 	if (listHasRichParts(value)) {
 		host.empty();
 		host.addClass("pq-result");

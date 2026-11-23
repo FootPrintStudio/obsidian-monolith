@@ -14,59 +14,21 @@ Repository: [FootPrintStudio/obsidian-grimoire](https://github.com/FootPrintStud
 
 See **Settings → Guide** in Obsidian (or [docs/GUIDE.md](docs/GUIDE.md)) for the full language reference.
 
-## v0.9.11 features
+## v1.0 features (breaking syntax cleanup)
 
-- **`filter(LIST, …)`** — `unique` stable dedupe; where-brace predicates (`!this.file`, `item`); one-level flatten of list-of-lists (preserves `AS` styles on flattened elements)
-- **`+` concat** preserves `@` / filter lists and `AS` chips as fragments (no stringify)
-- PQL-SPEC **v0.11**
+- **`@(from("…"), {where…}?, map?)`** — flattened at-query (no braces around `from` / map); map-without-where allowed
+- **One call shape:** `contains(hay, needle, {branch}?)`; `choice` brace-only; bool + ternary `inRange` as intentional arities
+- Brace **roles** documented (branch / select / triple / predicate list)
+- Keeps: wiki cross-note, `filter`, `AS`, `+` fragments, helpers
+- PQL-SPEC **v1.0**
 
-## v0.9.10 features
+## Prior highlights (absorbed)
 
-- **String/number helpers:** `lower` / `upper`, `replace`, `round` / `abs`
-- PQL-SPEC **v0.10**
-
-## v0.9.9 features
-
-- **`@` map `AS` styles** — e.g. `{(status AS pill)}` renders pill chips per matched page (not plain text)
-
-## v0.9.8 features
-
-- **`@({from("…")}, {where…}?, {map}?)`** multi-note queries — quoted `from` / `from("*")`, where `!` negates / `!this.file`, map `this` = source
-- Hard cap 250 pages (over → empty); prefer folder-scoped `from` in Visage
-- PQL-SPEC **v0.9**
-
-## v0.9.7 features
-
-- **Cross-note (single-page):** bare `[[Note]].field`, link-valued auto-pass (`parent.title`), list-of-links → list + `[0]` / `[0,4,5]`
-- Refresh dependency registry when **Refresh on metadata change** is on
-
-## v0.9.6 features
-
-- **`inRange`** resolves Epochs fantasy date **strings / frontmatter objects** the same way as `date()` (not only pre-branded `PqDate`)
-
-## v0.9.5 features
-
-- **`inRange`** classifies **dates** and **durations** (incl. Epochs-backed dates) the same way as numbers — below / in / above
-- Mixed or non-comparable operands → empty (ternary) / `false` (legacy boolean)
-
-## v0.9.4 features
-
-- Self-branching **`any` / `exists` / `contains` / `econtains`** plus **`choice(cond, {a, b})`**
-- True-only branch shorthand: **`{Value}`** ≡ **`{Value, ""}`**
-- Omit branch brace → legacy boolean (unchanged)
-
-## v0.9.2 features
-
-- Case 2b fix: `date − date` / plain frontmatter objects keep fantasy `calendarId` so `durationformat(..., "y")` is **2** fantasy years (not Gregorian **0**)
-
-## v0.9.3 features
-
-- **`inRange({value, low, high}, {below, inBand, above})`** — primary three-way inclusive range branch (below / in / above)
-- Legacy **`inRange(value, low, high)`** boolean kept for `choice(...)` migration
-
-## v0.9.0 features
-
-- **Epochs** integration: fantasy calendar dates in `date` / `dateformat`, calendar-aware `date ± dur`, frontmatter `{ calendar, year, month, day }`
+- `filter(LIST, unique?, {preds}?)`; `+` keeps lists/`AS` as fragments
+- Cross-note wiki + link auto-pass + list index; `@` map `AS` styles
+- Ternary + boolean `inRange` (numbers / dates / durations / Epochs)
+- Self-branching `any` / `exists` / `contains` / `econtains`; `{Value}` true-only
+- Epochs fantasy calendars; string/number helpers (`lower` / `upper` / `replace` / `round` / `abs`)
 
 ## Install
 

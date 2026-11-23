@@ -44,7 +44,7 @@ describe("eval core functions", () => {
 	});
 
 	it("choice branches on any() single arg", () => {
-		expect(evaluateExpression('choice(any(tags), "yes", "no")', ctx)).toBe("yes");
+		expect(evaluateExpression('choice(any(tags), {"yes", "no"})', ctx)).toBe("yes");
 		expect(evaluateExpression("any(emptyField)", createTestContext({ fields: { emptyField: "" } }))).toBe(
 			false,
 		);
@@ -102,8 +102,8 @@ describe("eval core functions", () => {
 	});
 
 	it("contains and econtains self-branch", () => {
-		expect(evaluateExpression('contains({title, "ell"}, {"yes", "no"})', ctx)).toBe("yes");
-		expect(evaluateExpression('contains({title, "xyz"}, {"yes", "no"})', ctx)).toBe("no");
+		expect(evaluateExpression('contains(title, "ell", {"yes", "no"})', ctx)).toBe("yes");
+		expect(evaluateExpression('contains(title, "xyz", {"yes", "no"})', ctx)).toBe("no");
 		expect(evaluateExpression('contains(title, "ell", {"hit"})', ctx)).toBe("hit");
 		expect(evaluateExpression('contains(title, "xyz", {"hit"})', ctx)).toBe("");
 		expect(evaluateExpression('contains(title, "ell")', ctx)).toBe(true);
@@ -113,13 +113,13 @@ describe("eval core functions", () => {
 		});
 		expect(
 			evaluateExpression(
-				'econtains({slice(epochTitles, 0, 1), ""}, {None, slice(epochTitles, 0, 1)})',
+				'econtains(slice(epochTitles, 0, 1), "", {None, slice(epochTitles, 0, 1)})',
 				epochCtx,
 			),
 		).toEqual(["Alpha"]);
 		expect(
 			evaluateExpression(
-				'econtains({slice(epochTitles, 1, 2), ""}, {None, slice(epochTitles, 1, 2)})',
+				'econtains(slice(epochTitles, 1, 2), "", {None, slice(epochTitles, 1, 2)})',
 				epochCtx,
 			),
 		).toBe(null);
@@ -143,7 +143,7 @@ describe("eval core functions", () => {
 			fields: { epochTitles: ["Alpha", "", "Gamma"] },
 		});
 		const expr =
-			'choice(econtains(slice(epochTitles, 0, 1), ""), None, slice(epochTitles, 0, 1))';
+			'choice(econtains(slice(epochTitles, 0, 1), ""), {None, slice(epochTitles, 0, 1)})';
 		expect(evaluateExpression(expr, epochCtx)).toEqual(["Alpha"]);
 	});
 
@@ -159,10 +159,10 @@ describe("eval core functions", () => {
 	});
 
 	it("evaluates or and and logical operators", () => {
-		expect(evaluateExpression('choice(false or true, "yes", "no")', createTestContext())).toBe("yes");
-		expect(evaluateExpression('choice(false and true, "yes", "no")', createTestContext())).toBe("no");
-		expect(evaluateExpression('choice(false && true, "yes", "no")', createTestContext())).toBe("no");
-		expect(evaluateExpression("choice((numA == 0) or (numB == 3), \"ok\", \"fail\")", createTestContext({ fields: { numA: 10, numB: 3 } }))).toBe("ok");
+		expect(evaluateExpression('choice(false or true, {"yes", "no"})', createTestContext())).toBe("yes");
+		expect(evaluateExpression('choice(false and true, {"yes", "no"})', createTestContext())).toBe("no");
+		expect(evaluateExpression('choice(false && true, {"yes", "no"})', createTestContext())).toBe("no");
+		expect(evaluateExpression("choice((numA == 0) or (numB == 3), {\"ok\", \"fail\"})", createTestContext({ fields: { numA: 10, numB: 3 } }))).toBe("ok");
 	});
 });
 
@@ -315,7 +315,7 @@ describe("evaluateExpressionSafe styles", () => {
 
 	it("preserves styled values through choice", () => {
 		const result = evaluateExpressionSafe(
-			'choice(true, location AS card, "")',
+			'choice(true, {location AS card})',
 			createTestContext({ fields: { location: "Hall" } }),
 		);
 		expect(result.ok).toBe(true);
@@ -497,7 +497,7 @@ describe("@ multi-note query", () => {
 
 	it("lists pages from a folder scope", () => {
 		const ctx = sourceCtx();
-		const listed = evaluateExpression('@({from("Employees/Management")})', ctx) as string[];
+		const listed = evaluateExpression('@(from("Employees/Management"))', ctx) as string[];
 		expect(listed).toEqual(["[[Alice]]", "[[Bob]]", "[[Roster]]"]);
 	});
 
@@ -505,7 +505,7 @@ describe("@ multi-note query", () => {
 		const ctx = sourceCtx();
 		expect(
 			evaluateExpression(
-				'@({from("Employees/Management")}, {!this.file, !contains(workStatus, "Fired")})',
+				'@(from("Employees/Management"), {!this.file, !contains(workStatus, "Fired")})',
 				ctx,
 			),
 		).toEqual(["[[Alice]]"]);
@@ -515,7 +515,7 @@ describe("@ multi-note query", () => {
 		const ctx = sourceCtx();
 		expect(
 			evaluateExpression(
-				'@({from("Employees/Management")}, {!this.file, contains(workStatus, "retired")}, {this.file.name + " → " + title})',
+				'@(from("Employees/Management"), {!this.file, contains(workStatus, "retired")}, this.file.name + " → " + title)',
 				ctx,
 			),
 		).toEqual(["Roster → Alice Title"]);
@@ -525,7 +525,7 @@ describe("@ multi-note query", () => {
 		const ctx = sourceCtx();
 		expect(
 			evaluateExpression(
-				'@({from("*")}, {contains(workStatus, "retired"), any(emailAddress)}, {title})',
+				'@(from("*"), {contains(workStatus, "retired"), any(emailAddress)}, title)',
 				ctx,
 			),
 		).toEqual(["Alice Title"]);
@@ -549,13 +549,13 @@ describe("@ multi-note query", () => {
 		const ctx = createTestContext({
 			listNotes: () => many,
 		});
-		expect(evaluateExpression('@({from("Bulk")})', ctx)).toEqual([]);
+		expect(evaluateExpression('@(from("Bulk"))', ctx)).toEqual([]);
 	});
 
 	it("maps with AS styles (paren and bare)", () => {
 		const ctx = sourceCtx();
 		const paren = evaluateExpressionSafe(
-			'@({from("Employees/Management")}, {any(workStatus)}, {(workStatus AS pill)})',
+			'@(from("Employees/Management"), {any(workStatus)}, (workStatus AS pill))',
 			ctx,
 		);
 		expect(paren.ok).toBe(true);
@@ -571,7 +571,7 @@ describe("@ multi-note query", () => {
 		}
 
 		const bare = evaluateExpression(
-			'@({from("Employees/Management")}, {contains(workStatus, "retired")}, {workStatus AS pill})',
+			'@(from("Employees/Management"), {contains(workStatus, "retired")}, workStatus AS pill)',
 			ctx,
 		);
 		expect(Array.isArray(bare)).toBe(true);
@@ -606,7 +606,7 @@ describe("string / number helpers", () => {
 	it("composes with default and choice", () => {
 		const ctx = createTestContext({ fields: { title: "Hello", height: 180.6 } });
 		expect(evaluateExpression('default(upper(missing), "N/A")', ctx)).toBe("N/A");
-		expect(evaluateExpression('choice(round(height) == 181, "tall", "short")', ctx)).toBe("tall");
+		expect(evaluateExpression('choice(round(height) == 181, {"tall", "short"})', ctx)).toBe("tall");
 	});
 });
 
@@ -824,7 +824,7 @@ describe("concat preserves @ lists and AS chips", () => {
 	it('keeps plain @ list as fragments under "label " + @', () => {
 		const ctx = movieCtx();
 		const v = evaluateExpression(
-			'"***Actors:** " + @({from("Movies")}, {contains(actors, this.file)}, {actors})',
+			'"***Actors:** " + @(from("Movies"), {contains(actors, this.file)}, actors)',
 			ctx,
 		);
 		expect(isPqFragments(v)).toBe(true);
@@ -841,7 +841,7 @@ describe("concat preserves @ lists and AS chips", () => {
 	it('keeps AS buttons through "label " + @ map AS', () => {
 		const ctx = movieCtx();
 		const v = evaluateExpression(
-			'"Actors: " + @({from("Movies")}, {contains(actors, this.file)}, {(actors AS button)})',
+			'"Actors: " + @(from("Movies"), {contains(actors, this.file)}, (actors AS button))',
 			ctx,
 		);
 		expect(isPqFragments(v)).toBe(true);
@@ -856,7 +856,7 @@ describe("concat preserves @ lists and AS chips", () => {
 	it('keeps AS buttons through "label " + filter(@ AS, unique, !this.file)', () => {
 		const ctx = movieCtx();
 		const v = evaluateExpression(
-			'"Actors: " + filter(@({from("Movies")}, {contains(actors, this.file)}, {(actors AS button)}), unique, {!this.file})',
+			'"Actors: " + filter(@(from("Movies"), {contains(actors, this.file)}, (actors AS button)), unique, {!this.file})',
 			ctx,
 		);
 		expect(isPqFragments(v)).toBe(true);

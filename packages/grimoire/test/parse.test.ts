@@ -184,7 +184,7 @@ describe("bare wiki and multi-index", () => {
 
 describe("@ query parse", () => {
 	it("parses from-only @ query", () => {
-		const ast = parseExpression('@({from("Characters")})');
+		const ast = parseExpression('@(from("Characters"))');
 		expect(ast.kind).toBe("atQuery");
 		if (ast.kind === "atQuery") {
 			expect(ast.fromArg).toEqual({ kind: "literal", value: "Characters" });
@@ -195,7 +195,7 @@ describe("@ query parse", () => {
 
 	it("parses where negates and map with this", () => {
 		const ast = parseExpression(
-			'@({from("Characters")}, {!this.file, !contains(workStatus, "Fired")}, {this.file.name + " → " + title})',
+			'@(from("Characters"), {!this.file, !contains(workStatus, "Fired")}, this.file.name + " → " + title)',
 		);
 		expect(ast.kind).toBe("atQuery");
 		if (ast.kind === "atQuery") {
@@ -206,7 +206,17 @@ describe("@ query parse", () => {
 		}
 	});
 
-	it("rejects @ without from brace", () => {
+	it("rejects @ without from(...)", () => {
 		expect(() => parseExpression("@({title})")).toThrow(/from/);
+		expect(() => parseExpression('@({from("Characters")})')).toThrow();
+	});
+
+	it("parses map without where", () => {
+		const ast = parseExpression('@(from("Characters"), title)');
+		expect(ast.kind).toBe("atQuery");
+		if (ast.kind === "atQuery") {
+			expect(ast.where).toEqual([]);
+			expect(ast.map).toEqual({ kind: "ident", name: "title" });
+		}
 	});
 });

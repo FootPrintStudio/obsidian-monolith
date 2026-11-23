@@ -126,7 +126,7 @@ function fileInFromScope(filePath: string, fromArg: string): boolean {
 }
 
 /**
- * List markdown notes for `@({from("…")})`.
+ * List markdown notes for `@(from("…"))`.
  * Over {@link AT_QUERY_MAX_PAGES} matches → empty list (Visage safety).
  */
 export function listNotesFrom(ctx: QueryContext, fromArg: string): QueryContext[] {
