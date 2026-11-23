@@ -740,3 +740,148 @@ describe("filter()", () => {
 		}
 	});
 });
+
+describe("concat preserves @ lists and AS chips", () => {
+	const alice = createTestContext({
+		fields: { title: "Alice" },
+		file: {
+			name: "Alice",
+			path: "Actors/Alice.md",
+			folder: "Actors",
+			mtime: pqDate(1),
+			ctime: pqDate(1),
+			size: 1,
+			tags: [],
+		},
+	});
+	const bob = createTestContext({
+		fields: { title: "Bob" },
+		file: {
+			name: "Bob",
+			path: "Actors/Bob.md",
+			folder: "Actors",
+			mtime: pqDate(1),
+			ctime: pqDate(1),
+			size: 1,
+			tags: [],
+		},
+	});
+	const carol = createTestContext({
+		fields: { title: "Carol" },
+		file: {
+			name: "Carol",
+			path: "Actors/Carol.md",
+			folder: "Actors",
+			mtime: pqDate(1),
+			ctime: pqDate(1),
+			size: 1,
+			tags: [],
+		},
+	});
+	const movie1 = createTestContext({
+		fields: { actors: ["[[Alice]]", "[[Bob]]", "[[Carol]]"] },
+		file: {
+			name: "M1",
+			path: "Movies/M1.md",
+			folder: "Movies",
+			mtime: pqDate(1),
+			ctime: pqDate(1),
+			size: 1,
+			tags: [],
+		},
+	});
+	const movie2 = createTestContext({
+		fields: { actors: ["[[Alice]]", "[[Bob]]"] },
+		file: {
+			name: "M2",
+			path: "Movies/M2.md",
+			folder: "Movies",
+			mtime: pqDate(1),
+			ctime: pqDate(1),
+			size: 1,
+			tags: [],
+		},
+	});
+	const roster = [alice, bob, carol, movie1, movie2];
+
+	function movieCtx() {
+		return createTestContext({
+			fields: alice.fields,
+			file: alice.file,
+			resolveNote: (linkpath) => {
+				const key = linkpath.replace(/\.md$/i, "").split("/").pop() ?? linkpath;
+				return roster.find((n) => n.file.name === key) ?? null;
+			},
+			listNotes: (fromArg) => {
+				const folder = fromArg.replace(/\/$/, "");
+				return roster.filter(
+					(n) => n.file.folder === folder || n.file.path.startsWith(`${folder}/`),
+				);
+			},
+		});
+	}
+
+	it('keeps plain @ list as fragments under "label " + @', () => {
+		const ctx = movieCtx();
+		const v = evaluateExpression(
+			'"***Actors:** " + @({from("Movies")}, {contains(actors, this.file)}, {actors})',
+			ctx,
+		);
+		expect(isPqFragments(v)).toBe(true);
+		if (isPqFragments(v)) {
+			expect(v.parts[0]).toBe("***Actors:** ");
+			// Flattened costars appear as wiki strings (not one coerced string).
+			const leaves = v.parts.filter((p) => typeof p === "string" && p.startsWith("[["));
+			expect(leaves.length).toBeGreaterThan(0);
+			expect(leaves).toContain("[[Bob]]");
+			expect(leaves).toContain("[[Carol]]");
+		}
+	});
+
+	it('keeps AS buttons through "label " + @ map AS', () => {
+		const ctx = movieCtx();
+		const v = evaluateExpression(
+			'"Actors: " + @({from("Movies")}, {contains(actors, this.file)}, {(actors AS button)})',
+			ctx,
+		);
+		expect(isPqFragments(v)).toBe(true);
+		if (isPqFragments(v)) {
+			expect(v.parts[0]).toBe("Actors: ");
+			const styled = v.parts.filter(isPqStyled);
+			expect(styled.length).toBeGreaterThan(0);
+			expect(styled.every((s) => isPqStyled(s) && s.style === "button")).toBe(true);
+		}
+	});
+
+	it('keeps AS buttons through "label " + filter(@ AS, unique, !this.file)', () => {
+		const ctx = movieCtx();
+		const v = evaluateExpression(
+			'"Actors: " + filter(@({from("Movies")}, {contains(actors, this.file)}, {(actors AS button)}), unique, {!this.file})',
+			ctx,
+		);
+		expect(isPqFragments(v)).toBe(true);
+		if (isPqFragments(v)) {
+			const styled = v.parts.filter(isPqStyled);
+			expect(styled.map((s) => (isPqStyled(s) ? s.value : null))).toEqual([
+				"[[Bob]]",
+				"[[Carol]]",
+			]);
+			expect(styled.every((s) => isPqStyled(s) && s.style === "button")).toBe(true);
+		}
+	});
+
+	it("still builds fragments for scalar AS + string (prior behavior)", () => {
+		const result = evaluateExpressionSafe(
+			'"**Location:** " + (location AS card) + " <br>"',
+			createTestContext({ fields: { location: "Hall" } }),
+		);
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(isPqFragments(result.value)).toBe(true);
+			if (isPqFragments(result.value)) {
+				expect(result.value.parts).toHaveLength(3);
+				expect(isPqStyled(result.value.parts[1]!)).toBe(true);
+			}
+		}
+	});
+});

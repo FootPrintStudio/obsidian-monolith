@@ -598,22 +598,62 @@ function hasStyledOrFragments(value: Value): boolean {
 	return isPqStyled(value) || isPqFragments(value);
 }
 
+/** Space-separate list leaves for fragment concat (chip gaps). */
+function joinValuesWithSpaces(items: Value[]): Value[] {
+	const out: Value[] = [];
+	for (let i = 0; i < items.length; i++) {
+		if (i > 0) out.push(" ");
+		const el = items[i]!;
+		if (isPqFragments(el)) out.push(...flattenFragmentParts(el));
+		else out.push(el);
+	}
+	return out;
+}
+
+/**
+ * Expand an operand for `+` so lists / AS chips become fragment parts instead of
+ * being stringified by coerceForConcat (Carl: `"label " + @(… AS …)` / filter).
+ */
+function expandConcatOperand(value: Value): Value[] {
+	if (isPqFragments(value)) {
+		return value.parts.flatMap((part) => expandConcatOperand(part));
+	}
+	if (isPqStyled(value) && Array.isArray(value.value)) {
+		return joinValuesWithSpaces(flattenFilterElement(value));
+	}
+	if (Array.isArray(value)) {
+		return joinValuesWithSpaces(normalizeFilterList(value));
+	}
+	return [value];
+}
+
+function shouldPreserveRichConcat(a: Value, b: Value): boolean {
+	return (
+		hasStyledOrFragments(a) ||
+		hasStyledOrFragments(b) ||
+		Array.isArray(a) ||
+		Array.isArray(b)
+	);
+}
+
 /** Prefer branded dates; otherwise fantasy coerce via Epochs (`date()` / frontmatter objects). */
 function asPqDate(value: Value): ReturnType<typeof toPqDate> {
 	return toPqDate(value) ?? fnDate(value);
 }
 
 function addValues(a: Value, b: Value): Value {
-	if (hasStyledOrFragments(a) || hasStyledOrFragments(b)) {
-		return pqFragments([...flattenFragmentParts(a), ...flattenFragmentParts(b)]);
-	}
-
 	const da = asPqDate(a);
 	const dura = toPqDuration(a);
 	const durb = toPqDuration(b);
 
 	if (da && durb) return addDateDuration(da, durb);
 	if (dura && durb) return addDurations(dura, durb);
+
+	// Keep AS chips / @ lists through prefix/suffix `+` (do not stringify).
+	if (shouldPreserveRichConcat(a, b)) {
+		return pqFragments([...expandConcatOperand(a), ...expandConcatOperand(b)]);
+	}
+
 	if (typeof a === "string" || typeof b === "string") {
 		return coerceForConcat(a) + coerceForConcat(b);
 	}
