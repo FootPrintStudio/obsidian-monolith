@@ -126,7 +126,8 @@ Duration literals: `dur(1, "day")`, `dur(3, "months")`, `dur("1 day 2 hours")`.
 | `replace(hay, needle, replacement)` | Replace all literal occurrences of `needle` (not regex); empty needle → hay unchanged |
 | `round(n)` / `round(n, digits)` | Round number; optional non-negative decimal places; non-numeric → null |
 | `abs(n)` | Absolute value; non-numeric → null |
-| `filter(LIST, unique?)` / `filter(LIST, {preds…})` | List filter. `unique` = stable dedupe (first wins). Where brace predicates **AND**; `!` negates; `this.` = source note; `item` = current element; wiki/`this.file` by path identity. `unique` may precede or follow the where brace — **dedupe last**. `null` → `[]`; non-list → single-element; list-of-lists → flatten **one** level. Where braces reuse pair/tuple AST (`{pred}` singleton sugar skips empty false arm). |
+| `filter(LIST, unique?)` / `filter(LIST, {preds…})` | List filter. `unique` = stable dedupe (first wins). Where brace predicates **AND**; `!` negates; `this.` = source note; `item` = current element; wiki/`this.file` by path identity. `unique` may precede or follow the where brace — **dedupe last**. `null` → `[]`; non-list → single-element; list-of-lists → flatten **one** level (re-wrap `AS` on children). Where braces reuse pair/tuple AST (`{pred}` singleton sugar skips empty false arm). |
+| `a + b` (concat) | When either side is styled/fragments **or a list** (incl. `@` / `filter` results), build **fragments** so `AS` chips and list items survive prefixes/suffixes. Otherwise string/number/date rules. |
 
 ## `select()` syntax
 

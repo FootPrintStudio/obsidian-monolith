@@ -162,6 +162,19 @@ function renderQueryResult(
 		host.addClass("pq-result");
 		host.addClass("grim-fragments");
 		for (const part of value.parts) {
+			// Nested lists inside fragments (defensive): render as rich list chips.
+			if (Array.isArray(part) && listHasRichParts(part)) {
+				let first = true;
+				for (const item of part) {
+					if (item === null || item === undefined || item === "") continue;
+					if (!first) {
+						host.createSpan({ cls: "grim-fragment-sep", text: " " });
+					}
+					first = false;
+					renderFragmentPart(app, host, item, sourcePath, ctx, settings);
+				}
+				continue;
+			}
 			renderFragmentPart(app, host, part, sourcePath, ctx, settings);
 		}
 		return;

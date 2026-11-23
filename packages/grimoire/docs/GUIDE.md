@@ -190,6 +190,8 @@ Inside the where brace: bare idents on wiki/page handles use that page’s field
 
 `null` → empty list; a non-list value → single-element list. A **list-of-lists** (e.g. map returning `actors` per movie) is **flattened one level** before filtering. Map results styled as a whole (`(actors AS button)`) keep **`AS` on each flattened element** so chips/buttons survive `unique` / where.
 
+**Concat:** `"label " + @(…)` / `"label " + filter(@(… AS …), …)` keeps the list/`AS` chips as rich fragments (does **not** stringify). Prefer a trailing space on the label.
+
 ```markdown
 `q= filter(tags, unique)`
 `q= filter(cast, {!this.file})`

@@ -1,7 +1,7 @@
 {
 	"id": "monolith",
 	"name": "Monolith",
-	"version": "0.5.1",
+	"version": "0.5.2",
 	"minAppVersion": "1.5.0",
 	"description": "FootPrintStudio Obsidian mega-plugin \u2014 full module set behind flags (shape A). CollectionXiewer stays external. Disable legacy FPS plugins while testing.",
 	"author": "FootPrintStudio",
