@@ -45,48 +45,6 @@
 	background-color: var(--interactive-hover);
 }
 
-.navinote-settings-tabs {
-	display: flex;
-	gap: 0;
-	margin: 0.75rem 0 1rem;
-	border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.navinote-settings-tab {
-	padding: 0.45rem 0.9rem;
-	cursor: pointer;
-	color: var(--text-muted);
-	border-bottom: 2px solid transparent;
-	margin-bottom: -1px;
-	user-select: none;
-}
-
-.navinote-settings-tab:hover {
-	color: var(--text-normal);
-}
-
-.navinote-settings-tab.is-active {
-	color: var(--text-accent);
-	border-bottom-color: var(--interactive-accent);
-	font-weight: 600;
-}
-
-.navinote-readme-panel {
-	max-height: 70vh;
-	overflow-y: auto;
-	padding-right: 0.5rem;
-}
-
-.navinote-readme-panel h1,
-.navinote-readme-panel h2,
-.navinote-readme-panel h3 {
-	margin-top: 1.2em;
-}
-
-.navinote-readme-panel pre {
-	overflow-x: auto;
-}
-
 .navinote-modal-footer {
 	display: flex;
 	justify-content: flex-end;

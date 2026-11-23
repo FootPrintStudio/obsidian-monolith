@@ -214,40 +214,6 @@
 	color: var(--text-faint);
 }
 
-/* Settings tabs */
-.lxn-settings-tabs {
-	display: flex;
-	gap: 0;
-	margin: 0.75rem 0 1rem;
-	border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.lxn-settings-tab {
-	padding: 0.45rem 0.9rem;
-	cursor: pointer;
-	color: var(--text-muted);
-	border-bottom: 2px solid transparent;
-	margin-bottom: -1px;
-	user-select: none;
-}
-
-.lxn-settings-tab:hover {
-	color: var(--text-normal);
-}
-
-.lxn-settings-tab.is-active {
-	color: var(--text-accent);
-	border-bottom-color: var(--interactive-accent);
-	font-weight: 600;
-}
-
-.lxn-readme-panel,
-.lxn-guide-panel {
-	max-height: 70vh;
-	overflow-y: auto;
-	padding-right: 0.5rem;
-}
-
 .lxn-index-info {
 	margin: 0.5rem 0 0.75rem;
 	font-size: var(--font-ui-small);

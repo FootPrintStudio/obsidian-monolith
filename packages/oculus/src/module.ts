@@ -1,13 +1,11 @@
 import { Plugin, TFile } from "obsidian";
 import { createGalleryBlock, GalleryBlock } from "./galleryBlock";
 import { registerMarkdownImageLightbox } from "./noteLightbox";
-import { DEFAULT_SETTINGS, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, type MediaGallerySettings } from "./types";
+import { DEFAULT_SETTINGS, MEDIA_EXTENSIONS, type MediaGallerySettings } from "./types";
 import { clearXiewerSessionMemory, revokeXiewerObjectUrls } from "./xiewerClient";
 
 export type { MediaGallerySettings } from "./types";
 export { DEFAULT_SETTINGS as DEFAULT_OCULUS_SETTINGS } from "./types";
-
-const MEDIA_EXTENSIONS = new Set([...IMAGE_EXTENSIONS, ...VIDEO_EXTENSIONS]);
 
 /** Oculus spine module — `oculus` code-block + markdown image lightbox. */
 export class OculusModule {

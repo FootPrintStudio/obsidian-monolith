@@ -6,7 +6,8 @@
 	"main": "src/module.ts",
 	"exports": {
 		".": "./src/module.ts",
-		"./types": "./src/types.ts"
+		"./types": "./src/types.ts",
+		"./contract": "./src/mediaContract.ts"
 	},
 	"scripts": {
 		"test": "esbuild src/views/deferredMedia.ts src/views/mediaAspect.ts src/views/lightboxZoom.ts src/parseBlock.ts src/searchQuery.ts src/gallerySort.ts src/xiewerClient.ts src/xiewerBaseUrl.ts --bundle --platform=node --format=esm --out-extension:.js=.mjs --outdir=.test-build && node --test test/*.test.mjs"

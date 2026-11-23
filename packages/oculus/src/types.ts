@@ -1,11 +1,16 @@
-export type GalleryViewType =
-	| "grid"
-	| "thumbnails"
-	| "carousel"
-	| "masonry-h"
-	| "masonry-v";
-
-export type MediaFilter = "images" | "video" | "all";
+export type {
+	GallerySortMode,
+	GalleryViewType,
+	MediaFilter,
+} from "./mediaContract";
+export {
+	IMAGE_EXTENSIONS,
+	MEDIA_EXTENSIONS,
+	MEDIA_FILTERS,
+	VIDEO_EXTENSIONS,
+	VIEW_TYPES,
+} from "./mediaContract";
+import type { GallerySortMode, GalleryViewType, MediaFilter } from "./mediaContract";
 
 export type MediaKind = "image" | "video";
 
@@ -38,19 +43,6 @@ export const DEFAULT_SETTINGS: MediaGallerySettings = {
 	lightboxMarkdownImages: true,
 	collectionXiewerBaseUrl: "http://127.0.0.1:47821",
 };
-
-export const IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "gif", "webp"]);
-export const VIDEO_EXTENSIONS = new Set(["mp4", "webm", "mov"]);
-
-export const VIEW_TYPES: GalleryViewType[] = [
-	"grid",
-	"thumbnails",
-	"carousel",
-	"masonry-h",
-	"masonry-v",
-];
-
-export const MEDIA_FILTERS: MediaFilter[] = ["images", "video", "all"];
 
 export interface ParseError {
 	line: number;
@@ -88,13 +80,6 @@ export interface XiewerMediaEntry {
 }
 
 export type MediaEntry = LocalMediaEntry | SearchMediaEntry | UrlMediaEntry | XiewerMediaEntry;
-
-export type GallerySortMode =
-	| "name-asc"
-	| "name-dsc"
-	| "date-asc"
-	| "date-dsc"
-	| "random";
 
 export interface ParsedGalleryBlock {
 	view: GalleryViewType;
