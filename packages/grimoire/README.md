@@ -14,6 +14,10 @@ Repository: [FootPrintStudio/obsidian-grimoire](https://github.com/FootPrintStud
 
 See **Settings → Guide** in Obsidian (or [docs/GUIDE.md](docs/GUIDE.md)) for the full language reference.
 
+## v1.0.2
+
+- Markdown in string literals around a list now renders as one run: `"**" + list + "**"` is bold (same as a single value). Plain parts of a fragment result are merged before rendering; `AS` chips are swapped in at their position.
+
 ## v1.0.1
 
 - **`join(list, sep)`** preserves `AS` chips / nested lists as fragments (same rich path as `+`); plain scalar lists still stringify
