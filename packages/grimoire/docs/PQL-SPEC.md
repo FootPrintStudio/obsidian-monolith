@@ -77,7 +77,7 @@ A frontmatter field named `file` (without `.`) is still accessible as a bare ide
 
 ### String concatenation
 
-If either operand to `+` is a string, both sides coerce to string. When either side is styled/fragments **or a list** (incl. `@` / `filter` results), build **fragments** so `AS` chips and list items survive prefixes/suffixes. **`join(list, sep)`** uses the same rich path when any element is styled/fragments/nested-list; plain scalar lists still produce a string.
+If either operand to `+` is a string, both sides coerce to string. When either side is styled/fragments **or a list** (incl. `@` / `filter` results), build **fragments** so `AS` chips and list items survive prefixes/suffixes. **`join(list, sep)`** uses the same rich path when any element is styled/fragments/nested-list; plain scalar lists still produce a string. Rendering merges the plain parts of a fragment result into a single markdown run (list items space-separated, `AS` chips placed in order), so inline markers in surrounding string literals pair across list elements.
 
 ### Date and duration arithmetic
 

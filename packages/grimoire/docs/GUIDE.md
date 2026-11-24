@@ -191,7 +191,7 @@ Inside the where brace: bare idents on wiki/page handles use that page’s field
 
 `null` → empty list; a non-list value → single-element list. A **list-of-lists** (e.g. map returning `actors` per movie) is **flattened one level** before filtering. Map results styled as a whole (`(actors AS button)`) keep **`AS` on each flattened element** so chips/buttons survive `unique` / where.
 
-**Concat / join:** `"label " + @(…)` / `"label " + filter(@(… AS …), …)` keeps the list/`AS` chips as rich fragments (does **not** stringify). Prefer a trailing space on the label. **`join(…, sep)`** also keeps `AS` chips / nested lists as fragments (plain string lists still join to a string).
+**Concat / join:** `"label " + @(…)` / `"label " + filter(@(… AS …), …)` keeps the list/`AS` chips as rich fragments (does **not** stringify). Prefer a trailing space on the label. Plain parts (string literals, list items) render as **one markdown run**, so `"**" + list + "**"` bolds the whole list like `"**" + value + "**"`; list items are separated by a single space, and `AS` chips sit inside the surrounding markdown. **`join(…, sep)`** also keeps `AS` chips / nested lists as fragments (plain string lists still join to a string).
 
 ```markdown
 `q= filter(tags, unique)`

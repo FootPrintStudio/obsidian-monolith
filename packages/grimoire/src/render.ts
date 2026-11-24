@@ -11,10 +11,11 @@ import {
 } from "./coerce";
 import { durationformat } from "./dates";
 import { evaluateExpressionSafe } from "./eval";
+import { buildFragmentRun, splitSlotText, type FragmentRun } from "./fragmentRun";
 import { highlightExpressionHtml, splitPrefixExpression } from "./highlight";
 import { registerCrossNoteDeps } from "./refresh";
 import { renderStyledValue } from "./renderStyles";
-import type { PropertyQuerySettings, Value } from "./types";
+import type { PqStyled, PropertyQuerySettings, Value } from "./types";
 
 class QueryResultRenderer extends MarkdownRenderChild {
 	constructor(
@@ -22,12 +23,15 @@ class QueryResultRenderer extends MarkdownRenderChild {
 		private app: App,
 		private body: string,
 		private sourcePath: string,
+		private onRendered?: () => void,
 	) {
 		super(container);
 	}
 
 	onload(): void {
-		void MarkdownRenderer.render(this.app, this.body, this.containerEl, this.sourcePath, this);
+		void MarkdownRenderer.render(this.app, this.body, this.containerEl, this.sourcePath, this).then(
+			() => this.onRendered?.(),
+		);
 	}
 }
 
@@ -93,40 +97,76 @@ export function renderValue(
 	}
 }
 
-function renderFragmentPart(
+function renderStyledFragment(
 	app: App,
 	host: HTMLElement,
-	value: Value,
+	value: PqStyled,
+	sourcePath: string,
+	ctx: MarkdownPostProcessorContext,
+	settings: PropertyQuerySettings,
+): HTMLElement {
+	const wrap = host.createSpan({ cls: "grim-fragment grim-fragment-styled" });
+	renderStyledValue(wrap, value.style, valueToStyleItems(value.value), app, sourcePath, settings, ctx);
+	return wrap;
+}
+
+/** Replace slot tokens in rendered text nodes with the styled chips they stand for. */
+function mountFragmentSlots(
+	root: HTMLElement,
+	run: FragmentRun,
+	mount: (slot: PqStyled) => HTMLElement,
+): void {
+	const doc = root.ownerDocument;
+	const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+	const targets: Text[] = [];
+	for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+		if (/[\uE000\uE001]/.test(node.nodeValue ?? "")) targets.push(node as Text);
+	}
+	for (const node of targets) {
+		const parent = node.parentNode;
+		if (!parent) continue;
+		for (const piece of splitSlotText(node.nodeValue ?? "")) {
+			if (typeof piece === "string") {
+				parent.insertBefore(doc.createTextNode(piece), node);
+				continue;
+			}
+			const slot = run.slots[piece];
+			if (slot) parent.insertBefore(mount(slot), node);
+		}
+		parent.removeChild(node);
+	}
+}
+
+/**
+ * Render fragment parts as ONE markdown run (`"**" + list + "**"` pairs its markers like the
+ * single-value case); styled parts are rendered as chips and swapped in at their slot tokens.
+ */
+function renderFragmentRun(
+	app: App,
+	host: HTMLElement,
+	run: FragmentRun,
 	sourcePath: string,
 	ctx: MarkdownPostProcessorContext,
 	settings: PropertyQuerySettings,
 ): void {
-	if (isPqStyled(value)) {
-		const wrap = host.createSpan({ cls: "grim-fragment grim-fragment-styled" });
-		renderStyledValue(
-			wrap,
-			value.style,
-			valueToStyleItems(value.value),
-			app,
-			sourcePath,
-			settings,
-			ctx,
-		);
-		return;
-	}
-
-	const text = valueToPlainString(value);
-	if (!text) return;
-
+	if (!run.text) return;
 	const wrap = host.createSpan({ cls: "grim-fragment grim-fragment-plain" });
-	const kind = classifyOutput(typeof value === "string" ? value : text);
+	const finish = (): void => {
+		if (run.slots.length === 0) return;
+		mountFragmentSlots(wrap, run, (slot) =>
+			renderStyledFragment(app, wrap, slot, sourcePath, ctx, settings),
+		);
+	};
+
+	const kind = classifyOutput(run.text);
 	if (kind === "html") {
-		wrap.innerHTML = text;
+		wrap.innerHTML = run.text;
+		finish();
 	} else if (kind === "markdown") {
-		const child = new QueryResultRenderer(wrap, app, text, sourcePath);
-		ctx.addChild(child);
+		ctx.addChild(new QueryResultRenderer(wrap, app, run.text, sourcePath, finish));
 	} else {
-		wrap.setText(text);
+		wrap.setText(run.text);
+		finish();
 	}
 }
 
@@ -157,43 +197,13 @@ function renderQueryResult(
 		return;
 	}
 
-	if (isPqFragments(value)) {
+	// Fragments and `@(…, (x AS pill))` lists: one markdown run + styled chips, not per-part spans.
+	if (isPqFragments(value) || listHasRichParts(value)) {
 		host.empty();
 		host.addClass("pq-result");
 		host.addClass("grim-fragments");
-		for (const part of value.parts) {
-			// Nested lists inside fragments (defensive): render as rich list chips.
-			if (Array.isArray(part) && listHasRichParts(part)) {
-				let first = true;
-				for (const item of part) {
-					if (item === null || item === undefined || item === "") continue;
-					if (!first) {
-						host.createSpan({ cls: "grim-fragment-sep", text: " " });
-					}
-					first = false;
-					renderFragmentPart(app, host, item, sourcePath, ctx, settings);
-				}
-				continue;
-			}
-			renderFragmentPart(app, host, part, sourcePath, ctx, settings);
-		}
-		return;
-	}
-
-	// `@(…, …, (status AS pill))` → list of styled values; keep chips, don't stringify.
-	if (listHasRichParts(value)) {
-		host.empty();
-		host.addClass("pq-result");
-		host.addClass("grim-fragments");
-		let first = true;
-		for (const part of value as Value[]) {
-			if (part === null || part === undefined || part === "") continue;
-			if (!first) {
-				host.createSpan({ cls: "grim-fragment-sep", text: " " });
-			}
-			first = false;
-			renderFragmentPart(app, host, part, sourcePath, ctx, settings);
-		}
+		const parts = isPqFragments(value) ? value.parts : [value];
+		renderFragmentRun(app, host, buildFragmentRun(parts), sourcePath, ctx, settings);
 		return;
 	}
 
